@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Card, CardContent } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Gift, Users, Trash2, Search, CheckCircle, XCircle, User, CreditCard, Ticket, Hash, DollarSign, Trophy } from 'lucide-react'
+import { Gift, Users, Trash2, Search, CheckCircle, XCircle, User, CreditCard, Ticket, Hash, DollarSign, Trophy, Edit } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Input } from '@/components/ui/input'
@@ -15,9 +15,11 @@ interface ViewListModalProps {
     items: PrizeOrParticipant[]
     type: 'prizes' | 'participants'
     onDelete: (id: number) => void
+    onEditParticipant?: (participant: Participant) => void
+    onEditPrize?: (prize: Prize) => void
 }
 
-export function ViewListModal({ isOpen, onOpenChange, items = [], type, onDelete }: ViewListModalProps) {
+export function ViewListModal({ isOpen, onOpenChange, items = [], type, onDelete, onEditParticipant, onEditPrize }: ViewListModalProps) {
     const [searchQuery, setSearchQuery] = useState('')
     const [filteredItems, setFilteredItems] = useState<PrizeOrParticipant[]>(items)
 
@@ -93,11 +95,13 @@ export function ViewListModal({ isOpen, onOpenChange, items = [], type, onDelete
                                                     <PrizeItem
                                                         prize={item as Prize}
                                                         onDelete={onDelete}
+                                                        onEdit={onEditPrize}
                                                     />
                                                 ) : (
                                                     <ParticipantItem
                                                         participant={item as Participant}
                                                         onDelete={onDelete}
+                                                        onEdit={onEditParticipant}
                                                     />
                                                 )}
                                             </CardContent>
@@ -113,7 +117,7 @@ export function ViewListModal({ isOpen, onOpenChange, items = [], type, onDelete
     )
 }
 
-function PrizeItem({ prize, onDelete }: { prize: Prize; onDelete: (id: number) => void }) {
+function PrizeItem({ prize, onDelete, onEdit }: { prize: Prize; onDelete: (id: number) => void; onEdit?: (prize: Prize) => void }) {
     return (
         <div className="flex flex-col h-full justify-between space-y-2">
             <div className="space-y-2">
@@ -141,7 +145,26 @@ function PrizeItem({ prize, onDelete }: { prize: Prize; onDelete: (id: number) =
                     )}
                 </span>
             </div>
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+                {onEdit && !prize.sorteado && (
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => onEdit(prize)}
+                                    className="text-white rounded-full p-1 hover:bg-white/20"
+                                >
+                                    <Edit className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Editar premio</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                )}
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
@@ -167,7 +190,7 @@ function PrizeItem({ prize, onDelete }: { prize: Prize; onDelete: (id: number) =
     )
 }
 
-function ParticipantItem({ participant, onDelete }: { participant: Participant; onDelete: (id: number) => void }) {
+function ParticipantItem({ participant, onDelete, onEdit }: { participant: Participant; onDelete: (id: number) => void; onEdit?: (participant: Participant) => void }) {
     const getStatusInfo = () => {
         if (participant.ticket_number && participant.active) {
             return {
@@ -221,7 +244,26 @@ function ParticipantItem({ participant, onDelete }: { participant: Participant; 
                     Estado: {statusInfo.label}
                 </span>
             </div>
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+                {onEdit && (
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => onEdit(participant)}
+                                    className="text-white rounded-full p-1 hover:bg-white/20"
+                                >
+                                    <Edit className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Editar participante</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                )}
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>

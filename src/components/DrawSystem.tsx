@@ -99,7 +99,7 @@ const DrawSystem = () => {
                     size="lg"
                     className="animate-pulse bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-4 px-8 rounded-full text-xl transition-all duration-200 transform hover:scale-105"
                 >
-                    Realizar Sorteo Espectacular
+                    Aloha! Realizar Sorteo
                 </Button>
             </div>
             <div className="mt-8">

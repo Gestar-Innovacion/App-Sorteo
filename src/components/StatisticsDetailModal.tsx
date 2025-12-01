@@ -10,9 +10,10 @@ interface StatisticsDetailModalProps {
     title: string
     items: (Prize | Participant)[]
     type: 'prizes' | 'participants'
+    winners?: Array<{ id_participant: number }>
 }
 
-export function StatisticsDetailModal({ isOpen, onOpenChange, title, items, type }: StatisticsDetailModalProps) {
+export function StatisticsDetailModal({ isOpen, onOpenChange, title, items, type, winners = [] }: StatisticsDetailModalProps) {
     return (
         <AnimatePresence>
             {isOpen && (
@@ -41,7 +42,11 @@ export function StatisticsDetailModal({ isOpen, onOpenChange, title, items, type
                                                 {type === 'prizes' ? (
                                                     <PrizeCard prize={item as Prize} />
                                                 ) : (
-                                                    <ParticipantCard participant={item as Participant} />
+                                                    <ParticipantCard 
+                                                        participant={item as Participant} 
+                                                        modalTitle={title}
+                                                        winners={winners}
+                                                    />
                                                 )}
                                             </CardContent>
                                         </Card>
@@ -73,12 +78,32 @@ function PrizeCard({ prize }: { prize: Prize }) {
     )
 }
 
-function ParticipantCard({ participant }: { participant: Participant }) {
+function ParticipantCard({ participant, modalTitle, winners = [] }: { participant: Participant; modalTitle?: string; winners?: Array<{ id_participant: number }> }) {
     const getStatusInfo = () => {
+        // Verificar si el participante es realmente un ganador (está en la API de ganadores)
+        const isActualWinner = winners.some(w => w.id_participant === participant.id_participant)
+        
+        // Si estamos en el modal de "No Asistentes", siempre mostrar "No Asistente"
+        if (modalTitle?.includes('No Asistentes')) {
+            return { label: 'No Asistente', color: 'bg-red-500 text-white', icon: XCircle }
+        }
+        
+        // Si estamos en el modal de "Ganadores", mostrar "Ganador"
+        if (modalTitle?.includes('Ganadores')) {
+            return { label: 'Ganador', color: 'bg-yellow-500 text-yellow-900', icon: Trophy }
+        }
+        
+        // Lógica normal para otros casos (Total de Participantes, etc.)
         if (participant.ticket_number && participant.active) {
             return { label: 'Asistente', color: 'bg-green-500 text-white', icon: CheckCircle }
         } else if (participant.ticket_number && !participant.active) {
-            return { label: 'Ganador', color: 'bg-yellow-500 text-yellow-900', icon: Trophy }
+            // Si tiene ticket pero está inactivo, verificar si es ganador real
+            if (isActualWinner) {
+                return { label: 'Ganador', color: 'bg-yellow-500 text-yellow-900', icon: Trophy }
+            } else {
+                // Si no es ganador real, es "No Asistente"
+                return { label: 'No Asistente', color: 'bg-red-500 text-white', icon: XCircle }
+            }
         } else if (!participant.ticket_number && !participant.active) {
             return { label: 'No Asistente', color: 'bg-red-500 text-white', icon: XCircle }
         } else {

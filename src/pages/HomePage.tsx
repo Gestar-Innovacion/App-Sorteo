@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '@/hooks/use-toast'
-import { Lock, ChevronDown, Eye, EyeOff, Search } from 'lucide-react'
+import { Lock, ChevronDown, Eye, EyeOff, Search, Sparkles } from 'lucide-react'
+import { HibiscusFlower } from '@/components/HibiscusFlower'
 import { Checkbox } from "@/components/ui/checkbox"
 
 import { request } from '@/services/index'
@@ -31,7 +32,8 @@ const HomePage = () => {
     const navigate = useNavigate()
     const { toast } = useToast()
 
-    const eventDate = new Date(2024, 11, 21, 18, 0, 0)
+    // 20 de diciembre 2025, sábado, 3 PM
+    const eventDate = new Date(2025, 11, 20, 15, 0, 0)
 
     useEffect(() => {
         const handleScroll = () => setScrollY(window.scrollY)
@@ -102,29 +104,145 @@ const HomePage = () => {
                     transition={{ duration: 1 }}
                 >
                     <motion.div
-                        className="mb-8 md:mb-16 text-center"
+                        className="mb-4 md:mb-8 text-center"
                         style={{ y: scrollY * 0.5 }}
                     >
-                        <motion.h1
-                            className="text-5xl md:text-7xl lg:text-9xl font-normal text-white mb-4 md:mb-8"
+                        <motion.div
+                            className="text-center mb-8 md:mb-12 relative pt-8 md:pt-16"
                             initial={{ opacity: 0, y: -50 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.2, duration: 0.8 }}
-                            style={{
-                                fontFamily: "'Great Vibes', cursive",
-                                textShadow: '0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(255,255,255,0.3), 0 0 30px rgba(255,255,255,0.2)',
-                            }}
                         >
-                            ¡Fiesta de Fin de Año!
-                        </motion.h1>
-                        <motion.p
-                            className="text-lg md:text-xl text-white/80"
-                            initial={{ opacity: 0, y: -30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4, duration: 0.8 }}
-                        >
-                            Únete a la celebración más espectacular del año
-                        </motion.p>
+                            {/* Estrellas decorativas sutiles */}
+                            {[...Array(8)].map((_, i) => (
+                                <motion.div
+                                    key={`star-${i}`}
+                                    className="absolute"
+                                    style={{
+                                        left: `${10 + i * 12}%`,
+                                        top: `${5 + (i % 3) * 30}%`,
+                                    }}
+                                    initial={{ opacity: 0, scale: 0 }}
+                                    animate={{ 
+                                        opacity: [0.2, 0.8, 0.2],
+                                        scale: [0.5, 1.3, 0.5],
+                                        rotate: [0, 180, 360]
+                                    }}
+                                    transition={{
+                                        duration: 4 + i * 0.3,
+                                        repeat: Infinity,
+                                        delay: i * 0.2,
+                                        ease: "easeInOut"
+                                    }}
+                                >
+                                    <Sparkles className="w-5 h-5 md:w-7 md:h-7 text-yellow-300/50" />
+                                </motion.div>
+                            ))}
+                            
+                            {/* Flores de hibisco decorativas */}
+                            {[...Array(4)].map((_, i) => {
+                                const positions = [
+                                    { left: '3%', top: '10%' },
+                                    { left: '92%', top: '15%' },
+                                    { left: '5%', top: '80%' },
+                                    { left: '90%', top: '85%' },
+                                ]
+                                const colors = ['text-pink-400/50', 'text-red-400/50', 'text-orange-400/50', 'text-yellow-400/50']
+                                return (
+                                    <motion.div
+                                        key={`hibiscus-${i}`}
+                                        className="absolute"
+                                        style={positions[i]}
+                                        initial={{ opacity: 0, scale: 0, rotate: -45 }}
+                                        animate={{ 
+                                            opacity: [0.4, 0.7, 0.4],
+                                            scale: [0.9, 1.2, 0.9],
+                                            rotate: [-45, 0, 45, 0, -45]
+                                        }}
+                                        transition={{
+                                            duration: 5 + i,
+                                            repeat: Infinity,
+                                            delay: i * 0.5,
+                                            ease: "easeInOut"
+                                        }}
+                                    >
+                                        <HibiscusFlower className={`w-16 h-16 md:w-24 md:h-24 lg:w-32 lg:h-32 ${colors[i]}`} size={128} />
+                                    </motion.div>
+                                )
+                            })}
+                            
+                            {/* Partículas flotantes hawaianas */}
+                            {[...Array(12)].map((_, i) => (
+                                <motion.div
+                                    key={`particle-${i}`}
+                                    className="absolute rounded-full"
+                                    style={{
+                                        left: `${Math.random() * 100}%`,
+                                        top: `${Math.random() * 100}%`,
+                                        width: `${4 + Math.random() * 4}px`,
+                                        height: `${4 + Math.random() * 4}px`,
+                                    }}
+                                    animate={{
+                                        y: [0, -30, 0],
+                                        x: [0, Math.random() * 20 - 10, 0],
+                                        opacity: [0.2, 0.6, 0.2],
+                                    }}
+                                    transition={{
+                                        duration: 3 + Math.random() * 2,
+                                        repeat: Infinity,
+                                        delay: Math.random() * 2,
+                                        ease: "easeInOut"
+                                    }}
+                                >
+                                    <div className={`w-full h-full rounded-full ${
+                                        i % 4 === 0 ? 'bg-cyan-300/40' :
+                                        i % 4 === 1 ? 'bg-orange-300/40' :
+                                        i % 4 === 2 ? 'bg-yellow-300/40' :
+                                        'bg-green-300/40'
+                                    }`} />
+                                </motion.div>
+                            ))}
+                            
+                            <motion.h1 
+                                className="text-8xl md:text-[12rem] lg:text-[15rem] font-normal block mb-8 md:mb-12 relative z-10"
+                                style={{
+                                    fontFamily: "'Dancing Script', cursive",
+                                    background: 'linear-gradient(90deg, #22d3ee, #fb923c, #fde047, #4ade80, #22d3ee)',
+                                    backgroundSize: '200% 100%',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    backgroundClip: 'text',
+                                    lineHeight: '1.1',
+                                    fontWeight: 700,
+                                    filter: 'drop-shadow(0 0 30px rgba(34,211,238,0.6)) drop-shadow(0 0 60px rgba(251,146,60,0.5)) drop-shadow(0 0 90px rgba(253,224,71,0.4))',
+                                }}
+                                animate={{
+                                    backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                                    filter: [
+                                        'drop-shadow(0 0 30px rgba(34,211,238,0.8)) drop-shadow(0 0 60px rgba(251,146,60,0.6)) drop-shadow(0 0 90px rgba(253,224,71,0.5))',
+                                        'drop-shadow(0 0 40px rgba(253,224,71,0.9)) drop-shadow(0 0 70px rgba(74,222,128,0.7)) drop-shadow(0 0 100px rgba(34,211,238,0.6))',
+                                        'drop-shadow(0 0 30px rgba(34,211,238,0.8)) drop-shadow(0 0 60px rgba(251,146,60,0.6)) drop-shadow(0 0 90px rgba(253,224,71,0.5))',
+                                    ],
+                                    scale: [1, 1.02, 1],
+                                }}
+                                transition={{
+                                    duration: 3,
+                                    repeat: Infinity,
+                                    ease: "easeInOut"
+                                }}
+                            >
+                                Aloha
+                            </motion.h1>
+                            <motion.h2
+                                className="text-4xl md:text-5xl lg:text-6xl font-bold text-white relative z-10 mt-8 md:mt-12"
+                                style={{
+                                    fontFamily: "'Great Vibes', cursive",
+                                    textShadow: '0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(255,255,255,0.3), 0 0 30px rgba(255,255,255,0.2)',
+                                }}
+                            >
+                                Fiesta de Fin de Año Temática de Hawái
+                            </motion.h2>
+                        </motion.div>
                     </motion.div>
 
                     <div className="flex flex-col md:flex-row justify-between items-center md:items-start gap-8 md:gap-0">

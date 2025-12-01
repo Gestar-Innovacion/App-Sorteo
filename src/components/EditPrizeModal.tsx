@@ -19,7 +19,7 @@ interface EditPrizeModalProps {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     prize: Prize | null;
-    onEditPrize: (prize: Prize) => void;
+    onEditPrize: (prize: Prize) => Promise<void>;
 }
 
 export function EditPrizeModal({ isOpen, onOpenChange, prize, onEditPrize }: EditPrizeModalProps) {
@@ -31,10 +31,37 @@ export function EditPrizeModal({ isOpen, onOpenChange, prize, onEditPrize }: Edi
         }
     }, [prize])
 
-    const handleSave = () => {
-        if (editedPrize) {
-            onEditPrize(editedPrize)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
+    const handleSave = async () => {
+        if (!editedPrize) return
+
+        // Validar que el rango inicial sea menor o igual al final
+        if (editedPrize.range_start > editedPrize.range_end) {
+            alert('El rango inicial no puede ser mayor al rango final')
+            return
+        }
+        
+        // Validar que el nombre no esté vacío
+        if (!editedPrize.name.trim()) {
+            alert('El nombre del premio es requerido')
+            return
+        }
+
+        // Validar que los rangos sean números válidos
+        if (isNaN(editedPrize.range_start) || isNaN(editedPrize.range_end)) {
+            alert('Los rangos deben ser números válidos')
+            return
+        }
+
+        setIsSubmitting(true)
+        try {
+            await onEditPrize(editedPrize)
             onOpenChange(false)
+        } catch (error) {
+            console.error('Error al guardar premio:', error)
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
@@ -100,9 +127,13 @@ export function EditPrizeModal({ isOpen, onOpenChange, prize, onEditPrize }: Edi
                             exit={{ opacity: 0, scale: 0.8 }}
                             transition={{ duration: 0.3 }}
                         >
-                            <Button onClick={handleSave} className="w-full bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white transition-colors duration-200 rounded-xl">
+                            <Button 
+                                onClick={handleSave} 
+                                disabled={isSubmitting}
+                                className="w-full bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white transition-colors duration-200 rounded-xl disabled:opacity-50"
+                            >
                                 <Save className="mr-2 h-5 w-5" />
-                                Guardar Cambios
+                                {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
                             </Button>
                         </motion.div>
                     </DialogContent>

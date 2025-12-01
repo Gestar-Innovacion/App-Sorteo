@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
-import { Home, LogOut, Gift, Users, Trophy, Plus, Upload, List, Trash2, RefreshCw, X, Menu } from 'lucide-react'
+import { Home, LogOut, Gift, Users, Trophy, Plus, Upload, List, Trash2, RefreshCw, X, Menu, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { AddPrizeModal } from '@/components/AddPrizeModal'
+import { EditPrizeModal } from '@/components/EditPrizeModal'
 import UploadCSVModal from '@/components/UploadCSVModal'
 import { UploadParticipantsCSVModal } from '@/components/UploadParticipantsCSVModal'
 import { ViewListModal } from '@/components/ViewListModal'
@@ -16,26 +17,80 @@ import { Prize, Participant, Winner } from '../types'
 import { ResetWarningModal } from '@/components/ResetWarningModal'
 import MinimalistLoader from '@/components/MinimalistLoader'
 import { AddParticipantModal } from '@/components/AddParticipantModal'
+import { EditParticipantModal } from '@/components/EditParticipantModal'
 import { StatisticsDetailModal } from '@/components/StatisticsDetailModal'
 
 import { request } from '@/services/index'
 import { URL_PARTICIPANT, URL_PRIZE, URL_WINNER, URL_PRIZE_BULK, URL_WINNER_FULL, URL_WINNER_FILTER, URL_PARTICIPANTS_BULK, URL_CLEAN, URL_LOGOUT } from '@/constants/index'
+import '@/styles/fonts.css'
 
 const AdminDashboard = () => {
     const [prizes, setPrizes] = useState<Prize[]>([])
     const [participants, setParticipants] = useState<Participant[]>([])
     const [winners, setWinners] = useState<Winner[]>([])
+    const isLoadingWinnersRef = useRef(false)
+    const isDrawingRef = useRef(false) // Prevenir múltiples sorteos simultáneos
+    
+    // Función helper para extraer número del ticket (maneja formatos como "T001", "321", etc.)
+    const extractTicketNumber = (ticketNumber?: string): number | null => {
+        if (!ticketNumber) return null
+        // Extraer solo los dígitos del ticket_number
+        const numbers = ticketNumber.replace(/\D/g, '')
+        if (numbers === '') return null
+        return parseInt(numbers, 10)
+    }
+    
+    // Función para recargar ganadores desde la API
+    const reloadWinners = async () => {
+        // Prevenir llamadas duplicadas simultáneas
+        if (isLoadingWinnersRef.current) {
+            console.log('Ya hay una recarga de ganadores en progreso, omitiendo...')
+            return
+        }
+        
+        isLoadingWinnersRef.current = true
+        try {
+            const responseWinners = await request(URL_WINNER, 'GET')
+            if (responseWinners.status_code === 200) {
+                const winnersData = Array.isArray(responseWinners.data) ? responseWinners.data : []
+                console.log('Ganadores recargados desde API:', winnersData)
+                setWinners(winnersData)
+                // Limpiar localStorage para mantener sincronización
+                localStorage.removeItem('winners')
+                return winnersData
+            } else {
+                console.error('Error al recargar ganadores:', responseWinners)
+                setWinners([])
+                localStorage.removeItem('winners')
+                return []
+            }
+        } catch (err) {
+            console.error('Error al recargar ganadores:', err)
+            setWinners([])
+            localStorage.removeItem('winners')
+            return []
+        } finally {
+            isLoadingWinnersRef.current = false
+        }
+    }
     const [showAddPrizeModal, setShowAddPrizeModal] = useState(false)
+    const [showEditPrizeModal, setShowEditPrizeModal] = useState(false)
+    const [selectedPrizeToEdit, setSelectedPrizeToEdit] = useState<Prize | null>(null)
     const [showUploadCSVModal, setShowUploadCSVModal] = useState(false)
     const [showUploadParticipantsCSVModal, setShowUploadParticipantsCSVModal] = useState(false)
     const [showPrizeListModal, setShowPrizeListModal] = useState(false)
     const [showParticipantListModal, setShowParticipantListModal] = useState(false)
     const [showDrawingModal, setShowDrawingModal] = useState(false)
+    const [winningTicketNumber, setWinningTicketNumber] = useState<number | undefined>(undefined)
+    const [currentPrizeRange, setCurrentPrizeRange] = useState<{ start: number; end: number } | null>(null)
     const [showWinnerModal, setShowWinnerModal] = useState(false)
     const [currentWinner, setCurrentWinner] = useState<Winner | null>(null)
     const [isLeftPanelVisible, setIsLeftPanelVisible] = useState(true)
+    const [areSidebarsVisible, setAreSidebarsVisible] = useState(true)
     const [showResetWarningModal, setShowResetWarningModal] = useState(false)
     const [showAddParticipantModal, setShowAddParticipantModal] = useState(false)
+    const [showEditParticipantModal, setShowEditParticipantModal] = useState(false)
+    const [selectedParticipantToEdit, setSelectedParticipantToEdit] = useState<Participant | null>(null)
     const navigate = useNavigate()
     const { toast } = useToast()
 
@@ -46,13 +101,21 @@ const AdminDashboard = () => {
     const [statisticsModalTitle, setStatisticsModalTitle] = useState('')
     const [statisticsModalItems, setStatisticsModalItems] = useState<(Prize | Participant)[]>([])
     const [statisticsModalType, setStatisticsModalType] = useState<'prizes' | 'participants'>('prizes')
+    const hasLoadedRef = useRef(false)
 
     useEffect(() => {
+        // Prevenir múltiples cargas simultáneas
+        if (hasLoadedRef.current) return
+        hasLoadedRef.current = true
+
         const loadData = async () => {
             try {
+                // Limpiar localStorage de ganadores para evitar desincronización
+                localStorage.removeItem('winners')
+                
                 const responseParticipants = await request(URL_PARTICIPANT, 'GET')
                 if (responseParticipants.status_code === 200) {
-                    setParticipants(responseParticipants.data)
+                    setParticipants(responseParticipants.data || [])
                 } else {
                     navigate('/')
                     return
@@ -60,7 +123,7 @@ const AdminDashboard = () => {
 
                 const responsePrize = await request(URL_PRIZE, 'GET')
                 if (responsePrize.status_code === 200) {
-                    setPrizes(responsePrize.data)
+                    setPrizes(responsePrize.data || [])
                 } else {
                     navigate('/')
                     return
@@ -68,14 +131,26 @@ const AdminDashboard = () => {
 
                 const responseWinners = await request(URL_WINNER, 'GET')
                 if (responseWinners.status_code === 200) {
-                    setWinners(responseWinners.data)
+                    // Asegurar que siempre sea un array
+                    const winnersData = Array.isArray(responseWinners.data) ? responseWinners.data : []
+                    console.log('Ganadores cargados desde API:', winnersData)
+                    setWinners(winnersData)
+                    
+                    // Limpiar localStorage si la API está vacía pero localStorage tiene datos
+                    if (winnersData.length === 0) {
+                        localStorage.removeItem('winners')
+                    }
                 } else {
-                    navigate('/')
-                    return
+                    console.error('Error al cargar ganadores:', responseWinners)
+                    setWinners([])
+                    localStorage.removeItem('winners')
+                    // No redirigir si solo falla la carga de ganadores
                 }
             } catch (err) {
                 console.error('Error al cargar los datos:', err)
                 setError(true)
+                setWinners([])
+                localStorage.removeItem('winners')
                 navigate('/')
             } finally {
                 setLoading(false)
@@ -83,7 +158,8 @@ const AdminDashboard = () => {
         }
 
         loadData()
-    }, [navigate])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     useEffect(() => {
         const checkMobile = () => {
@@ -207,6 +283,49 @@ const AdminDashboard = () => {
         }
     }
 
+    const handleUpdatePrize = async (updatedPrize: Prize) => {
+        try {
+            const responsePrize = await request(URL_PRIZE, "PUT", {
+                id_prize: updatedPrize.id_prize,
+                name: updatedPrize.name,
+                range_start: updatedPrize.range_start,
+                range_end: updatedPrize.range_end,
+                sorteado: updatedPrize.sorteado
+            });
+
+            if (responsePrize.status_code === 200) {
+                const updatedPrizes = prizes.map(p =>
+                    p.id_prize === updatedPrize.id_prize ? responsePrize.data : p
+                )
+                setPrizes(updatedPrizes)
+                toast({
+                    variant: "success",
+                    title: "Premio actualizado",
+                    description: "El premio ha sido actualizado exitosamente.",
+                })
+            } else {
+                const errorMessage = responsePrize.data?.detail || "No se pudo actualizar el premio. Por favor, inténtelo de nuevo."
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: errorMessage,
+                })
+            }
+        } catch (error) {
+            console.error("Error al actualizar premio:", error)
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Ocurrió un error inesperado. Por favor, inténtelo de nuevo.",
+            })
+        }
+    }
+
+    const handleEditPrize = (prize: Prize) => {
+        setSelectedPrizeToEdit(prize)
+        setShowEditPrizeModal(true)
+    }
+
     const handleDeleteParticipant = async (participantId: number) => {
         const response = await request(URL_PARTICIPANT, "DELETE", { id_participant: participantId })
         if (response.status_code === 200) {
@@ -227,9 +346,33 @@ const AdminDashboard = () => {
     }
 
     const handleSelectPrize = async (prize: Prize) => {
-        const availableParticipants = participants.filter(p =>
-            p.active && parseInt(p.ticket_number ? p.ticket_number : "") >= prize.range_start && parseInt(p.ticket_number ? p.ticket_number : "") <= prize.range_end
-        )
+        // Prevenir múltiples sorteos simultáneos
+        if (isDrawingRef.current) {
+            toast({
+                title: "Sorteo en progreso",
+                description: "Ya hay un sorteo en curso. Por favor, espera a que termine.",
+                variant: "default",
+            })
+            return
+        }
+
+        // Validar que el premio no esté ya sorteado
+        if (prize.sorteado) {
+            toast({
+                title: "Premio ya sorteado",
+                description: `El premio "${prize.name}" ya ha sido sorteado.`,
+                variant: "destructive",
+            })
+            return
+        }
+
+        // Filtrar participantes elegibles con validación mejorada
+        const availableParticipants = participants.filter(p => {
+            if (!p.active || !p.ticket_number) return false
+            const ticketNum = extractTicketNumber(p.ticket_number)
+            if (ticketNum === null) return false
+            return ticketNum >= prize.range_start && ticketNum <= prize.range_end
+        })
 
         if (availableParticipants.length === 0) {
             toast({
@@ -240,67 +383,162 @@ const AdminDashboard = () => {
             return
         }
 
+        // Marcar que hay un sorteo en progreso
+        isDrawingRef.current = true
+        
+        // Validar nuevamente que hay participantes disponibles (por si cambió algo)
+        const currentAvailableParticipants = participants.filter(p => {
+            if (!p.active || !p.ticket_number) return false
+            const ticketNum = extractTicketNumber(p.ticket_number)
+            if (ticketNum === null) return false
+            return ticketNum >= prize.range_start && ticketNum <= prize.range_end
+        })
+
+        if (currentAvailableParticipants.length === 0) {
+            toast({
+                title: "Error",
+                description: "No hay participantes disponibles. El sorteo fue cancelado.",
+                variant: "destructive",
+            })
+            isDrawingRef.current = false
+            return
+        }
+
+        // Seleccionar ganador aleatorio ANTES de mostrar el modal
+        const randomParticipantIndex = Math.floor(Math.random() * currentAvailableParticipants.length)
+        const selectedParticipant = currentAvailableParticipants[randomParticipantIndex]
+        
+        // Validar que el participante seleccionado sea válido
+        if (!selectedParticipant || !selectedParticipant.id_participant) {
+            toast({
+                title: "Error",
+                description: "Error al seleccionar el participante. Por favor, intenta de nuevo.",
+                variant: "destructive",
+            })
+            isDrawingRef.current = false
+            return
+        }
+        
+        // Obtener el número del ticket del ganador para la animación
+        const winningNumber = extractTicketNumber(selectedParticipant.ticket_number) || 0
+        setWinningTicketNumber(winningNumber)
+        
+        // Guardar el rango del premio para la animación
+        setCurrentPrizeRange({ start: prize.range_start, end: prize.range_end })
+        
+        // Guardar el participante y premio seleccionados para usarlos después (usar const para evitar problemas de scope)
+        const savedParticipant = { ...selectedParticipant }
+        const savedPrize = { ...prize }
+        
+        // Mostrar el modal con el número ganador
         setShowDrawingModal(true)
 
-        setTimeout(async () => {
-            setShowDrawingModal(false)
-
-            const randomParticipantIndex = Math.floor(Math.random() * availableParticipants.length)
-            const selectedParticipant = availableParticipants[randomParticipantIndex]
-
-            const responseWinner = await request(URL_WINNER, 'POST', {
-                'id_prize': prize.id_prize,
-                'id_participant': selectedParticipant.id_participant,
-                'drawdate': new Date().toISOString(),
-            })
-
-            if (responseWinner.status_code === 200) {
-                const newWinner: Winner = {
-                    ...responseWinner.data,
-                    participant_name: selectedParticipant.name,
-                    ticket_number: selectedParticipant.ticket_number,
-                    prize_name: prize.name
-                }
-                setCurrentWinner(newWinner)
-                setShowWinnerModal(true)
-
-                const updatedWinners = [...winners, newWinner]
-                setWinners(updatedWinners)
-
-                const requestUpdatePrizes = await request(URL_PRIZE, "PUT", { 'id_prize': prize.id_prize, 'sorteado': true })
-                const requestUpdateParticipants = await request(URL_PARTICIPANT, "PUT", { 'id_participant': selectedParticipant.id_participant, 'active': false })
-
-                if (requestUpdatePrizes.status_code === 200 && requestUpdateParticipants.status_code === 200) {
-                    const updatedPrizes = prizes.map(p =>
-                        p.id_prize === prize.id_prize ? { ...p, sorteado: true } : p
-                    )
-                    setPrizes(updatedPrizes)
-
-                    const updatedParticipants = participants.map(p =>
-                        p.id_participant === selectedParticipant.id_participant ? { ...p, active: false } : p
-                    )
-                    setParticipants(updatedParticipants)
-
-                    toast({
-                        title: "¡Sorteo realizado!",
-                        description: `${selectedParticipant.name} ha ganado ${prize.name}`,
-                        variant: "success",
-                    })
-                } else {
-                    toast({
-                        title: "Error",
-                        description: "Hubo un problema al actualizar el premio o el participante.",
-                        variant: "destructive",
-                    })
-                }
-            } else {
-                toast({
-                    title: "Error",
-                    description: "Hubo un problema al registrar el ganador.",
-                    variant: "destructive",
-                })
+        // Esperar tiempo suficiente: animación (~3s) + tiempo que el número ganador se queda quieto (1.5s) = 4.5s
+        setTimeout(() => {
+            console.log('Timeout del sorteo completado - iniciando proceso de mostrar ganador')
+            
+            // Crear el objeto ganador INMEDIATAMENTE
+            const newWinner: Winner = {
+                id_winner: 0,
+                id_prize: savedPrize.id_prize || 0,
+                id_participant: savedParticipant.id_participant,
+                participant_name: savedParticipant.name,
+                ticket_number: savedParticipant.ticket_number || '',
+                prize_name: savedPrize.name,
+                drawDate: new Date().toISOString()
             }
-        }, 5000)
+            
+            console.log('Ganador creado:', newWinner)
+            console.log('Estado actual - showDrawingModal:', showDrawingModal, 'showWinnerModal:', showWinnerModal)
+            
+            // Cerrar el modal de sorteo y abrir el del ganador de forma síncrona
+            setShowDrawingModal(false)
+            setWinningTicketNumber(undefined)
+            setCurrentPrizeRange(null)
+            setCurrentWinner(newWinner)
+            setShowWinnerModal(true)
+            
+            console.log('Estados actualizados - showDrawingModal: false, showWinnerModal: true, currentWinner:', newWinner)
+            
+            // Procesar las actualizaciones de API en segundo plano (sin bloquear)
+            ;(async () => {
+                try {
+                    console.log('Iniciando registro de ganador en API:', {
+                        prize: savedPrize,
+                        participant: savedParticipant
+                    })
+
+                    // Registrar ganador en la API
+                    const responseWinner = await request(URL_WINNER, 'POST', {
+                        'id_prize': savedPrize.id_prize,
+                        'id_participant': savedParticipant.id_participant,
+                        'drawdate': new Date().toISOString(),
+                    })
+
+                    console.log('Respuesta de la API al registrar ganador:', responseWinner)
+
+                    if (responseWinner.status_code === 200 && responseWinner.data) {
+                        // Actualizar el ganador con los datos de la API
+                        const updatedWinner: Winner = {
+                            ...responseWinner.data,
+                            participant_name: savedParticipant.name,
+                            ticket_number: savedParticipant.ticket_number || '',
+                            prize_name: savedPrize.name
+                        }
+                        // Asegurar que el ganador tenga todos los campos requeridos
+                        if (!updatedWinner.participant_name) updatedWinner.participant_name = savedParticipant.name
+                        if (!updatedWinner.ticket_number) updatedWinner.ticket_number = savedParticipant.ticket_number || ''
+                        if (!updatedWinner.prize_name) updatedWinner.prize_name = savedPrize.name
+                        
+                        // Actualizar el ganador en el estado
+                        setCurrentWinner(updatedWinner)
+                        console.log('Ganador actualizado con datos de API:', updatedWinner)
+                    }
+                } catch (apiError) {
+                    console.error('Error al registrar ganador en API (continuando con datos locales):', apiError)
+                }
+
+                // Recargar ganadores desde la API para asegurar sincronización (en segundo plano)
+                reloadWinners().catch(err => console.error('Error al recargar ganadores:', err))
+
+                // Actualizar premio y participante en la API (en segundo plano)
+                Promise.all([
+                    request(URL_PRIZE, "PUT", { 'id_prize': savedPrize.id_prize, 'sorteado': true }),
+                    request(URL_PARTICIPANT, "PUT", { 'id_participant': savedParticipant.id_participant, 'active': false })
+                ]).then(([requestUpdatePrizes, requestUpdateParticipants]) => {
+                    if (requestUpdatePrizes.status_code === 200 && requestUpdateParticipants.status_code === 200) {
+                        // Actualizar estados locales
+                        setPrizes(prevPrizes => prevPrizes.map(p =>
+                            p.id_prize === savedPrize.id_prize ? { ...p, sorteado: true } : p
+                        ))
+
+                        setParticipants(prevParticipants => prevParticipants.map(p =>
+                            p.id_participant === savedParticipant.id_participant ? { ...p, active: false } : p
+                        ))
+
+                        toast({
+                            title: "¡Sorteo realizado!",
+                            description: `${savedParticipant.name} ha ganado ${savedPrize.name}`,
+                            variant: "success",
+                        })
+                    } else {
+                        console.error('Error al actualizar premio o participante:', { requestUpdatePrizes, requestUpdateParticipants })
+                        toast({
+                            title: "Advertencia",
+                            description: "El ganador fue registrado, pero hubo un problema al actualizar el estado del premio o participante. Por favor, verifica manualmente.",
+                            variant: "default",
+                        })
+                    }
+                }).catch(err => {
+                    console.error('Error al actualizar premio o participante:', err)
+                })
+            })().catch((err: unknown) => {
+                console.error('Error inesperado en el proceso de API:', err)
+            })
+            
+            // Siempre liberar el flag de sorteo en progreso
+            isDrawingRef.current = false
+        }, 4500) // ~3s animación + 1.5s que el número ganador se queda quieto
     }
 
     const handleNextPrize = () => {
@@ -321,13 +559,14 @@ const AdminDashboard = () => {
         const responseResetWinners = await request(URL_WINNER_FULL, "DELETE")
 
         if (responseResetWinners.status_code === 200) {
+            // Recargar ganadores desde la API para asegurar sincronización
+            await reloadWinners()
+
             const restoredPrizes = prizes.map(prize => ({ ...prize, sorteado: false }))
             setPrizes(restoredPrizes)
 
             const restoredParticipants = participants.map(participant => ({ ...participant, active: true }))
             setParticipants(restoredParticipants)
-
-            setWinners([])
 
             toast({
                 variant: "success",
@@ -354,8 +593,8 @@ const AdminDashboard = () => {
         })
 
         if (responseDeleteWinner.status_code === 200) {
-            const updatedWinners = winners.filter(w => w.id_winner !== winnerId)
-            setWinners(updatedWinners)
+            // Recargar ganadores desde la API para asegurar sincronización
+            await reloadWinners()
 
             const updatedPrizes = prizes.map(prize =>
                 prize.id_prize === winnerToDelete.id_prize ? { ...prize, sorteado: false } : prize
@@ -455,11 +694,70 @@ const AdminDashboard = () => {
         }
     }
 
+    const handleUpdateParticipant = async (updatedParticipant: Participant) => {
+        try {
+            const responseParticipant = await request(URL_PARTICIPANT, "PUT", {
+                id_participant: updatedParticipant.id_participant,
+                name: updatedParticipant.name,
+                cedula: updatedParticipant.cedula,
+                ticket_number: updatedParticipant.ticket_number || '',
+                active: updatedParticipant.active
+            });
+
+            if (responseParticipant.status_code === 200) {
+                const updatedParticipants = participants.map(p =>
+                    p.id_participant === updatedParticipant.id_participant ? responseParticipant.data : p
+                )
+                setParticipants(updatedParticipants)
+                toast({
+                    variant: "success",
+                    title: "Participante actualizado",
+                    description: "El participante ha sido actualizado exitosamente.",
+                })
+                return { success: true, message: "Participante actualizado con éxito" }
+            } else {
+                const errorMessage = responseParticipant.data?.detail || "No se pudo actualizar el participante. Por favor, inténtelo de nuevo."
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: errorMessage,
+                })
+                return { success: false, message: errorMessage }
+            }
+        } catch (error) {
+            console.error("Error al actualizar participante:", error)
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Ocurrió un error inesperado. Por favor, inténtelo de nuevo.",
+            })
+            return { success: false, message: "Error inesperado al actualizar el participante" }
+        }
+    }
+
+    const handleEditParticipant = (participant: Participant) => {
+        setSelectedParticipantToEdit(participant)
+        setShowEditParticipantModal(true)
+    }
+
     const openStatisticsModal = (title: string, items: (Prize | Participant)[], type: 'prizes' | 'participants') => {
         setStatisticsModalTitle(title)
         setStatisticsModalItems(items)
         setStatisticsModalType(type)
         setShowStatisticsModal(true)
+    }
+
+    // Obtener participantes que realmente son ganadores (están en la API de winners)
+    const getActualWinners = () => {
+        if (winners.length === 0) return []
+        const winnerParticipantIds = winners.map(w => w.id_participant)
+        return participants.filter(p => winnerParticipantIds.includes(p.id_participant))
+    }
+
+    // Obtener participantes que son "No Asistentes" (active: false pero NO son ganadores)
+    const getNonAttendees = () => {
+        const winnerParticipantIds = winners.map(w => w.id_participant)
+        return participants.filter(p => !p.active && !winnerParticipantIds.includes(p.id_participant))
     }
 
     return (
@@ -489,6 +787,15 @@ const AdminDashboard = () => {
                             <img src="/gestar-logo.png" alt="Gestar Logo" className="h-6 sm:h-8" />
                         </div>
                         <div className="flex items-center space-x-2 sm:space-x-4">
+                            {/* Botón para ocultar/mostrar paneles laterales */}
+                            <Button
+                                variant="ghost"
+                                onClick={() => setAreSidebarsVisible(!areSidebarsVisible)}
+                                className="text-white hover:bg-white/10 rounded-full"
+                                title={areSidebarsVisible ? "Ocultar paneles laterales" : "Mostrar paneles laterales"}
+                            >
+                                {areSidebarsVisible ? <ChevronsLeft className="h-5 w-5" /> : <ChevronsRight className="h-5 w-5" />}
+                            </Button>
                             {isMobile && (
                                 <Button
                                     variant="ghost"
@@ -536,36 +843,36 @@ const AdminDashboard = () => {
                     </div>
                 </header>
 
-                <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <main className="w-full px-2 sm:px-4 py-4 sm:py-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                         {/* Left Sidebar */}
                         <AnimatePresence>
-                            {(isLeftPanelVisible || !isMobile) && (
+                            {((isLeftPanelVisible && areSidebarsVisible) || !isMobile && areSidebarsVisible) && (
                                 <motion.div
                                     initial={{ opacity: 0, x: -300 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -300 }}
                                     transition={{ duration: 0.3 }}
-                                    className="lg:col-span-3 space-y-8"
+                                    className={`${areSidebarsVisible ? 'lg:col-span-2' : 'hidden'} space-y-4`}
                                 >
                                     {/* Prize Management */}
                                     <motion.div
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className="rounded-xl bg-white/10 backdrop-blur-lg border border-white/20 p-6"
+                                        className="rounded-xl bg-white/10 backdrop-blur-lg border border-white/20 p-5"
                                     >
                                         <h2 className="text-xl font-semibold text-white mb-4 flex items-center">
                                             <Gift className="mr-2 h-5 w-5" />
                                             Gestión de Premios
                                         </h2>
                                         <div className="space-y-4">
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                <Button onClick={() => setShowAddPrizeModal(true)} className="w-full bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-300 hover:scale-105">
-                                                    <Plus className="mr-2 h-5 w-5" />
+                                            <div className="grid grid-cols-1 gap-3">
+                                                <Button onClick={() => setShowAddPrizeModal(true)} className="w-full bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-300 hover:scale-105 text-sm sm:text-base py-2">
+                                                    <Plus className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                                                     Agregar
                                                 </Button>
-                                                <Button onClick={() => setShowUploadCSVModal(true)} className="w-full bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-300 hover:scale-105 flex items-center justify-center h-10">
-                                                    <Upload className="h-4 w-4 mr-1.5 shrink-0" />
+                                                <Button onClick={() => setShowUploadCSVModal(true)} className="w-full bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-300 hover:scale-105 flex items-center justify-center text-sm sm:text-base py-2">
+                                                    <Upload className="h-4 w-4 mr-2 shrink-0" />
                                                     Cg CSV
                                                 </Button>
                                                 <Button onClick={() => {
@@ -575,8 +882,8 @@ const AdminDashboard = () => {
                                                         title: "Lista de premios",
                                                         description: "Mostrando todos los premios disponibles.",
                                                     })
-                                                }} className="w-full bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-300 hover:scale-105">
-                                                    <List className="mr-2 h-5 w-5" />
+                                                }} className="w-full bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-300 hover:scale-105 text-sm sm:text-base py-2">
+                                                    <List className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                                                     Ver Lista
                                                 </Button>
                                             </div>
@@ -605,20 +912,20 @@ const AdminDashboard = () => {
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: 0.1 }}
-                                        className="rounded-xl bg-white/10 backdrop-blur-lg border border-white/20 p-6"
+                                        className="rounded-xl bg-white/10 backdrop-blur-lg border border-white/20 p-5"
                                     >
                                         <h2 className="text-xl font-semibold text-white mb-4 flex items-center">
                                             <Users className="mr-2 h-5 w-5" />
                                             Gestión de Participantes
                                         </h2>
                                         <div className="space-y-4">
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                <Button onClick={() => setShowAddParticipantModal(true)} className="w-full bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-300 hover:scale-105">
-                                                    <Plus className="mr-2 h-5 w-5" />
+                                            <div className="grid grid-cols-1 gap-3">
+                                                <Button onClick={() => setShowAddParticipantModal(true)} className="w-full bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-300 hover:scale-105 text-sm sm:text-base py-2">
+                                                    <Plus className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                                                     Agregar
                                                 </Button>
-                                                <Button onClick={() => setShowUploadParticipantsCSVModal(true)} className="w-full bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-300 hover:scale-105">
-                                                    <Upload className="mr-2 h-5 w-5" />
+                                                <Button onClick={() => setShowUploadParticipantsCSVModal(true)} className="w-full bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-300 hover:scale-105 text-sm sm:text-base py-2">
+                                                    <Upload className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                                                     Cargar CSV
                                                 </Button>
                                                 <Button onClick={() => {
@@ -628,8 +935,8 @@ const AdminDashboard = () => {
                                                         title: "Lista de participantes",
                                                         description: "Mostrando todos los participantes registrados.",
                                                     })
-                                                }} className="w-full bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-300 hover:scale-105">
-                                                    <List className="mr-2 h-5 w-5" />
+                                                }} className="w-full bg-white/10 hover:bg-white/20 text-white rounded-full transition-all duration-300 hover:scale-105 text-sm sm:text-base py-2">
+                                                    <List className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                                                     Ver Lista
                                                 </Button>
                                             </div>
@@ -649,15 +956,15 @@ const AdminDashboard = () => {
                                                         <p className="text-xs text-white/80">
                                                             Asistentes</p>
                                                     </div>
-                                                    <div className="text-center cursor-pointer" onClick={() => openStatisticsModal('Participantes Ganadores', participants.filter(p => p.ticket_number && !p.active), 'participants')}>
+                                                    <div className="text-center cursor-pointer" onClick={() => openStatisticsModal('Participantes Ganadores', getActualWinners(), 'participants')}>
                                                         <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm mb-2">
-                                                            <p className="text-xl font-bold text-white">{participants.filter(p => p.ticket_number && !p.active).length}</p>
+                                                            <p className="text-xl font-bold text-white">{getActualWinners().length}</p>
                                                         </div>
                                                         <p className="text-xs text-white/80">Ganadores</p>
                                                     </div>
-                                                    <div className="text-center cursor-pointer" onClick={() => openStatisticsModal('Participantes No Asistentes', participants.filter(p => !p.ticket_number && !p.active), 'participants')}>
+                                                    <div className="text-center cursor-pointer" onClick={() => openStatisticsModal('Participantes No Asistentes', getNonAttendees(), 'participants')}>
                                                         <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm mb-2">
-                                                            <p className="text-xl font-bold text-white">{participants.filter(p => !p.ticket_number && !p.active).length}</p>
+                                                            <p className="text-xl font-bold text-white">{getNonAttendees().length}</p>
                                                         </div>
                                                         <p className="text-xs text-white/80">No Asistentes</p>
                                                     </div>
@@ -674,7 +981,7 @@ const AdminDashboard = () => {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: 0.2 }}
-                            className="lg:col-span-6 rounded-xl bg-white/10 backdrop-blur-lg border border-white/20 p-4 sm:p-8 flex flex-col items-center justify-center min-h-[400px] sm:min-h-[600px] overflow-y-auto"
+                            className={`${areSidebarsVisible ? 'lg:col-span-8' : 'lg:col-span-12'} rounded-xl bg-white/10 backdrop-blur-lg border border-white/20 p-3 sm:p-4 pt-3 sm:pt-4 flex flex-col items-center justify-start min-h-[500px] sm:min-h-[700px] overflow-y-auto`}
                         >
                             <DrawSection
                                 prizes={prizes.filter(p => !p.sorteado)}
@@ -684,55 +991,60 @@ const AdminDashboard = () => {
                         </motion.div>
 
                         {/* Right Sidebar */}
+                        {areSidebarsVisible && (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, x: 300 }}
                             transition={{ delay: 0.3 }}
-                            className="lg:col-span-3 rounded-xl bg-white/10 backdrop-blur-lg border border-white/20 p-4 sm:p-6 overflow-y-auto max-h-[400px] sm:max-h-[600px]"
+                            className="lg:col-span-2 rounded-xl bg-white/10 backdrop-blur-lg border border-white/20 p-3 sm:p-4 flex flex-col h-full"
                         >
-                            <h2 className="text-xl font-semibold text-white mb-4 flex items-center justify-between">
+                            <h2 className="text-lg sm:text-xl font-semibold text-white mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 flex-shrink-0">
                                 <div className="flex items-center">
-                                    <Trophy className="mr-2 h-5 w-5" />
-                                    Historial de Ganadores
+                                    <Trophy className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                                    <span className="text-sm sm:text-base">Historial de Ganadores</span>
                                 </div>
                                 <Button
                                     variant="destructive"
                                     size="sm"
-                                    className="bg-red-600 hover:bg-red-700 text-white rounded-full transition-all duration-300 hover:scale-105"
+                                    className="bg-red-600 hover:bg-red-700 text-white rounded-full transition-all duration-300 hover:scale-105 p-2"
                                     onClick={handleClearWinners}
+                                    title="Vaciar"
                                 >
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Vaciar
+                                    <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
                                 </Button>
                             </h2>
+                            <div className="flex-1 overflow-y-auto scrollbar-hide">
                             {winners.length === 0 ? (
-                                <p className="text-white/80 text-center">
+                                <p className="text-white/80 text-center py-8">
                                     No hay ganadores registrados
                                 </p>
                             ) : (
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                     {winners.map((winner) => (
                                         <Card key={winner.id_winner} className="bg-white/5 border-white/10 rounded-2xl overflow-hidden">
-                                            <CardContent className="p-4 flex justify-between items-start">
-                                                <div>
-                                                    <p className="font-semibold text-white text-lg">{winner.participant_name}</p>
-                                                    <p className="text-white/80 text-sm mt-1">Premio: {winner.prize_name}</p>
-                                                    <p className="text-white/60 text-xs mt-1">Fecha: {winner.drawDate}</p>
+                                            <CardContent className="p-3 sm:p-4 flex justify-between items-start gap-2">
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-semibold text-white text-sm sm:text-base break-words">{winner.participant_name}</p>
+                                                    <p className="text-white/80 text-xs sm:text-sm mt-1 break-words">Premio: {winner.prize_name}</p>
+                                                    <p className="text-white/60 text-xs mt-1">Fecha: {new Date(winner.drawDate).toLocaleDateString()}</p>
                                                 </div>
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => handleDeleteWinner(winner.id_winner ? winner.id_winner : 0)}
-                                                    className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                                                    className="text-red-400 hover:text-red-300 hover:bg-red-400/10 shrink-0 ml-2"
                                                 >
-                                                    <Trash2 className="h-4 w-4" />
+                                                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                                                 </Button>
                                             </CardContent>
                                         </Card>
                                     ))}
                                 </div>
                             )}
+                            </div>
                         </motion.div>
+                        )}
                     </div>
                 </main>
             </div>
@@ -741,6 +1053,12 @@ const AdminDashboard = () => {
                 isOpen={showAddPrizeModal}
                 onOpenChange={setShowAddPrizeModal}
                 onAddSuccess={handleAddPrize}
+            />
+            <EditPrizeModal
+                isOpen={showEditPrizeModal}
+                onOpenChange={setShowEditPrizeModal}
+                prize={selectedPrizeToEdit}
+                onEditPrize={handleUpdatePrize}
             />
 
             <UploadCSVModal
@@ -761,6 +1079,7 @@ const AdminDashboard = () => {
                 items={prizes}
                 type="prizes"
                 onDelete={handleDeletePrize}
+                onEditPrize={handleEditPrize}
             />
 
             <ViewListModal
@@ -769,16 +1088,33 @@ const AdminDashboard = () => {
                 items={participants}
                 type="participants"
                 onDelete={handleDeleteParticipant}
+                onEditParticipant={handleEditParticipant}
             />
 
             <DrawingModal
                 isOpen={showDrawingModal}
-                onOpenChange={setShowDrawingModal}
+                onOpenChange={(open) => {
+                    // Prevenir que el usuario cierre el modal manualmente durante el sorteo
+                    if (!open && isDrawingRef.current) {
+                        console.log('Intento de cerrar modal de sorteo durante el sorteo - bloqueado')
+                        return
+                    }
+                    setShowDrawingModal(open)
+                }}
+                winningNumber={winningTicketNumber}
+                rangeStart={currentPrizeRange?.start}
+                rangeEnd={currentPrizeRange?.end}
             />
 
             <WinnerModal
-                isOpen={showWinnerModal}
-                onOpenChange={setShowWinnerModal}
+                isOpen={showWinnerModal && !!currentWinner}
+                onOpenChange={(open) => {
+                    console.log('WinnerModal onOpenChange llamado con:', open, 'currentWinner:', currentWinner)
+                    setShowWinnerModal(open)
+                    if (!open) {
+                        setCurrentWinner(null)
+                    }
+                }}
                 winner={currentWinner}
                 onNextPrize={handleNextPrize}
             />
@@ -793,12 +1129,20 @@ const AdminDashboard = () => {
                 onAddParticipant={handleAddParticipant}
                 existingParticipants={participants}
             />
+            <EditParticipantModal
+                isOpen={showEditParticipantModal}
+                onOpenChange={setShowEditParticipantModal}
+                participant={selectedParticipantToEdit}
+                onUpdateParticipant={handleUpdateParticipant}
+                existingParticipants={participants}
+            />
             <StatisticsDetailModal
                 isOpen={showStatisticsModal}
                 onOpenChange={setShowStatisticsModal}
                 title={statisticsModalTitle}
                 items={statisticsModalItems}
                 type={statisticsModalType}
+                winners={winners}
             />
         </div>
     )
