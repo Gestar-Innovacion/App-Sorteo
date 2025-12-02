@@ -1,7 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo, useRef } from 'react'
 import { motion } from 'framer-motion'
 
-const CountdownUnit = ({ value, label }: { value: number, label: string }) => (
+interface TimeLeft {
+    days: number
+    hours: number
+    minutes: number
+    seconds: number
+}
+
+const CountdownUnit = memo(({ value, label }: { value: number, label: string }) => (
     <motion.div
         className="flex flex-col items-center"
         whileHover={{ scale: 1.1 }}
@@ -10,26 +17,33 @@ const CountdownUnit = ({ value, label }: { value: number, label: string }) => (
             className="text-5xl font-bold text-white mb-1"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
             key={value}
         >
             {String(value).padStart(2, '0')}
         </motion.span>
         <span className="text-white/60 text-sm">{label}</span>
     </motion.div>
-)
+))
 
-export const Countdown = ({ targetDate }: { targetDate: Date }) => {
-    const [timeLeft, setTimeLeft] = useState({
+CountdownUnit.displayName = 'CountdownUnit'
+
+export const Countdown = memo(({ targetDate }: { targetDate: Date }) => {
+    const [timeLeft, setTimeLeft] = useState<TimeLeft>({
         days: 0,
         hours: 0,
         minutes: 0,
         seconds: 0
     })
+    
+    const targetTimeRef = useRef(targetDate.getTime())
+
+    useEffect(() => {
+        targetTimeRef.current = targetDate.getTime()
+    }, [targetDate])
 
     useEffect(() => {
         const calculateTimeLeft = () => {
-            const difference = targetDate.getTime() - new Date().getTime()
+            const difference = targetTimeRef.current - Date.now()
 
             if (difference > 0) {
                 setTimeLeft({
@@ -47,7 +61,7 @@ export const Countdown = ({ targetDate }: { targetDate: Date }) => {
         const timer = setInterval(calculateTimeLeft, 1000)
 
         return () => clearInterval(timer)
-    }, [targetDate])
+    }, [])
 
     return (
         <motion.div
@@ -62,5 +76,6 @@ export const Countdown = ({ targetDate }: { targetDate: Date }) => {
             <CountdownUnit value={timeLeft.seconds} label="Segundos" />
         </motion.div>
     )
-}
+})
 
+Countdown.displayName = 'Countdown'

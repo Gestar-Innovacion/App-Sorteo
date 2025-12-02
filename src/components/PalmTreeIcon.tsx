@@ -1,5 +1,3 @@
-import React from 'react'
-
 interface PalmTreeIconProps {
   className?: string
   size?: number

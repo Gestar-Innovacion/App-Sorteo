@@ -1,39 +1,57 @@
-import { useEffect, useRef } from 'react'
-import { motion } from 'framer-motion'
+import { useEffect, useRef, useMemo, memo, useCallback } from 'react'
 
-const Particle = ({ delay }: { delay: number }) => {
-    const randomX = Math.random() * 100
-    const randomY = Math.random() * 100
-    const size = Math.random() * 3 + 1
+interface ParticleData {
+    id: number
+    x: number
+    y: number
+    size: number
+    delay: number
+}
 
+const Particle = memo(({ data }: { data: ParticleData }) => {
     return (
-        <motion.div
-            className="absolute rounded-full bg-white"
+        <div
+            className="absolute rounded-full bg-white animate-particle-pulse"
             style={{
-                width: size,
-                height: size,
-                x: `${randomX}%`,
-                y: `${randomY}%`,
-            }}
-            animate={{
-                opacity: [0, 1, 0],
-                scale: [0, 1, 0],
-            }}
-            transition={{
-                duration: 5,
-                delay,
-                repeat: Infinity,
-                ease: "easeInOut",
+                width: data.size,
+                height: data.size,
+                left: `${data.x}%`,
+                top: `${data.y}%`,
+                animationDelay: `${data.delay}s`,
             }}
         />
     )
-}
+})
 
-export const ParticleEffect = () => {
+Particle.displayName = 'Particle'
+
+export const ParticleEffect = memo(() => {
     const particlesRef = useRef<HTMLDivElement>(null)
+    const rafRef = useRef<number | null>(null)
+    const lastUpdateRef = useRef<number>(0)
+    
+    // Generar partículas una sola vez
+    const particles = useMemo<ParticleData[]>(() => {
+        return Array.from({ length: 20 }, (_, i) => ({
+            id: i,
+            x: Math.random() * 100,
+            y: Math.random() * 100,
+            size: Math.random() * 3 + 1,
+            delay: Math.random() * 5,
+        }))
+    }, [])
 
-    useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
+    // Throttled mouse move handler usando RAF
+    const handleMouseMove = useCallback((e: MouseEvent) => {
+        const now = performance.now()
+        // Limitar actualizaciones a ~30fps
+        if (now - lastUpdateRef.current < 33) return
+        
+        if (rafRef.current) {
+            cancelAnimationFrame(rafRef.current)
+        }
+        
+        rafRef.current = requestAnimationFrame(() => {
             if (particlesRef.current) {
                 const { clientX, clientY } = e
                 const { left, top, width, height } = particlesRef.current.getBoundingClientRect()
@@ -42,41 +60,58 @@ export const ParticleEffect = () => {
                 particlesRef.current.style.setProperty('--mouse-x', x.toString())
                 particlesRef.current.style.setProperty('--mouse-y', y.toString())
             }
-        }
-
-        window.addEventListener('mousemove', handleMouseMove)
-        return () => window.removeEventListener('mousemove', handleMouseMove)
+            lastUpdateRef.current = now
+        })
     }, [])
+
+    useEffect(() => {
+        window.addEventListener('mousemove', handleMouseMove, { passive: true })
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove)
+            if (rafRef.current) {
+                cancelAnimationFrame(rafRef.current)
+            }
+        }
+    }, [handleMouseMove])
 
     return (
         <div
             ref={particlesRef}
-            className="fixed inset-0 pointer-events-none"
+            className="fixed inset-0 pointer-events-none z-[2]"
             style={{
-                filter: 'url(#glow)',
                 '--mouse-x': '0.5',
                 '--mouse-y': '0.5',
             } as React.CSSProperties}
         >
-            {[...Array(50)].map((_, i) => (
-                <Particle key={i} delay={Math.random() * 5} />
+            {particles.map((particle) => (
+                <Particle key={particle.id} data={particle} />
             ))}
-            <svg width="0" height="0">
-                <filter id="glow">
-                    <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
-                    <feMerge>
-                        <feMergeNode in="coloredBlur" />
-                        <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                </filter>
-            </svg>
+            
+            {/* Gradiente que sigue al mouse */}
             <div
-                className="absolute inset-0 bg-gradient-radial from-transparent to-transparent"
+                className="absolute inset-0"
                 style={{
-                    background: `radial-gradient(circle at calc(var(--mouse-x) * 100%) calc(var(--mouse-y) * 100%), rgba(255,255,255,0.1) 0%, transparent 50%)`,
+                    background: `radial-gradient(circle at calc(var(--mouse-x) * 100%) calc(var(--mouse-y) * 100%), rgba(255,255,255,0.05) 0%, transparent 40%)`,
                 }}
             />
+            
+            <style>{`
+                @keyframes particle-pulse {
+                    0%, 100% {
+                        opacity: 0;
+                        transform: scale(0);
+                    }
+                    50% {
+                        opacity: 0.8;
+                        transform: scale(1);
+                    }
+                }
+                .animate-particle-pulse {
+                    animation: particle-pulse 5s ease-in-out infinite;
+                }
+            `}</style>
         </div>
     )
-}
+})
 
+ParticleEffect.displayName = 'ParticleEffect'

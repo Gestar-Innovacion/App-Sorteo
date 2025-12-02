@@ -1,5 +1,3 @@
-import React from 'react'
-
 interface HibiscusFlowerProps {
   className?: string
   size?: number

@@ -1,42 +1,57 @@
-import { useRef } from 'react'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { memo } from 'react'
 
-export const AuroraBorealis = () => {
-    const ref = useRef(null)
-    const { scrollYProgress } = useScroll({
-        target: ref,
-        offset: ["start start", "end start"]
-    })
-
-    const y1 = useTransform(scrollYProgress, [0, 1], ["0%", "50%"])
-    const y2 = useTransform(scrollYProgress, [0, 1], ["0%", "30%"])
-    const y3 = useTransform(scrollYProgress, [0, 1], ["0%", "20%"])
-
+export const AuroraBorealis = memo(() => {
     return (
-        <div ref={ref} className="fixed inset-0 overflow-hidden bg-black">
+        <div className="fixed inset-0 overflow-hidden bg-black">
             <div className="absolute inset-0 bg-gradient-to-b from-blue-900 via-purple-900 to-black" />
-            <motion.div
-                className="absolute inset-0 opacity-50"
+            
+            {/* Capas de aurora con CSS puro para mejor rendimiento */}
+            <div
+                className="absolute inset-0 opacity-50 animate-aurora-1"
                 style={{
                     background: 'linear-gradient(45deg, #00ff00, #0000ff, #ff00ff)',
-                    y: y1
                 }}
             />
-            <motion.div
-                className="absolute inset-0 opacity-40"
+            <div
+                className="absolute inset-0 opacity-40 animate-aurora-2"
                 style={{
                     background: 'linear-gradient(135deg, #ff00ff, #00ffff, #ffff00)',
-                    y: y2
                 }}
             />
-            <motion.div
-                className="absolute inset-0 opacity-30"
+            <div
+                className="absolute inset-0 opacity-30 animate-aurora-3"
                 style={{
                     background: 'linear-gradient(225deg, #ff0000, #00ff00, #0000ff)',
-                    y: y3
                 }}
             />
+            
+            <style>{`
+                @keyframes aurora-1 {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(10%); }
+                }
+                @keyframes aurora-2 {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(6%); }
+                }
+                @keyframes aurora-3 {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(4%); }
+                }
+                .animate-aurora-1 {
+                    animation: aurora-1 20s ease-in-out infinite;
+                }
+                .animate-aurora-2 {
+                    animation: aurora-2 25s ease-in-out infinite;
+                    animation-delay: -5s;
+                }
+                .animate-aurora-3 {
+                    animation: aurora-3 30s ease-in-out infinite;
+                    animation-delay: -10s;
+                }
+            `}</style>
         </div>
     )
-}
+})
 
+AuroraBorealis.displayName = 'AuroraBorealis'

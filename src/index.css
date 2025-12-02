@@ -17,6 +17,41 @@
     @apply min-h-screen text-white antialiased;
     background: linear-gradient(to bottom right, #1e3a8a, #155e75, #064e3b);
   }
+  
+  /* Optimizaciones de rendimiento globales */
+  *,
+  *::before,
+  *::after {
+    /* Reducir parpadeo durante animaciones */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  
+  /* Optimizar elementos con animaciones */
+  .animate-twinkle,
+  .animate-float,
+  .animate-pulse,
+  .animate-gradient-x,
+  .animate-snowfall,
+  .animate-particle-pulse,
+  .animate-aurora-1,
+  .animate-aurora-2,
+  .animate-aurora-3,
+  .animate-gradient-shift {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+  }
+  
+  /* Reducir motion para usuarios que lo prefieren */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
 @layer components {

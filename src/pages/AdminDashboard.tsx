@@ -22,6 +22,7 @@ import { StatisticsDetailModal } from '@/components/StatisticsDetailModal'
 
 import { request } from '@/services/index'
 import { URL_PARTICIPANT, URL_PRIZE, URL_WINNER, URL_PRIZE_BULK, URL_WINNER_FULL, URL_WINNER_FILTER, URL_PARTICIPANTS_BULK, URL_CLEAN, URL_LOGOUT } from '@/constants/index'
+import { StarryBackground } from '@/components/StarryBackground'
 import '@/styles/fonts.css'
 
 const AdminDashboard = () => {
@@ -762,22 +763,8 @@ const AdminDashboard = () => {
 
     return (
         <div className="min-h-screen relative overflow-hidden">
-            {/* Fondo dinámico */}
-            <div className="absolute inset-0 bg-gradient-to-br from-teal-600 to-blue-800 animate-gradient-x">
-                <div className="absolute inset-0">
-                    {[...Array(100)].map((_, i) => (
-                        <div
-                            key={i}
-                            className="absolute h-1 w-1 bg-white rounded-full animate-twinkle"
-                            style={{
-                                top: `${Math.random() * 100}%`,
-                                left: `${Math.random() * 100}%`,
-                                animationDelay: `${Math.random() * 5}s`,
-                            }}
-                        />
-                    ))}
-                </div>
-            </div>
+            {/* Fondo dinámico - optimizado */}
+            <StarryBackground />
 
             <div className="relative z-10">
                 <header className="bg-white/10 backdrop-blur-lg border-b border-white/20">

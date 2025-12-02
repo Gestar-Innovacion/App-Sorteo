@@ -1,50 +1,74 @@
-import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { useMemo, memo } from 'react'
 
-const Snowflake = ({ }: { delay: number }) => {
-    const [xPosition, setXPosition] = useState(Math.random() * 100)
-    const size = Math.random() * 4 + 4
+interface SnowflakeData {
+    id: number
+    left: number
+    size: number
+    duration: number
+    delay: number
+    xOffset: number
+}
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setXPosition(Math.random() * 100)
-        }, 5000)
-        return () => clearInterval(interval)
+const Snowflake = memo(({ data }: { data: SnowflakeData }) => {
+    return (
+        <div
+            className="absolute text-white/40 animate-snowfall"
+            style={{
+                left: `${data.left}%`,
+                fontSize: `${data.size}px`,
+                animationDuration: `${data.duration}s`,
+                animationDelay: `${data.delay}s`,
+                '--x-offset': `${data.xOffset}px`,
+            } as React.CSSProperties}
+        >
+            ❄
+        </div>
+    )
+})
+
+Snowflake.displayName = 'Snowflake'
+
+export const SnowEffect = memo(() => {
+    // Generar datos de copos una sola vez con useMemo
+    const snowflakes = useMemo<SnowflakeData[]>(() => {
+        return Array.from({ length: 25 }, (_, i) => ({
+            id: i,
+            left: Math.random() * 100,
+            size: Math.random() * 4 + 4,
+            duration: 15 + Math.random() * 10,
+            delay: Math.random() * 10,
+            xOffset: (Math.random() - 0.5) * 100,
+        }))
     }, [])
 
     return (
-        <motion.div
-            className="absolute text-white/40"
-            initial={{ top: "-5%", left: `${xPosition}%` }}
-            animate={{
-                top: "105%",
-                left: [
-                    `${xPosition}%`,
-                    `${xPosition + (Math.random() * 10 - 5)}%`,
-                    `${xPosition + (Math.random() * 10 - 5)}%`,
-                    `${xPosition}%`
-                ],
-                rotate: [0, 180, 360],
-            }}
-            transition={{
-                duration: 15 + Math.random() * 10,
-                repeat: Infinity,
-                ease: "linear"
-            }}
-            style={{ fontSize: `${size}px` }}
-        >
-            ❄
-        </motion.div>
-    )
-}
-
-export const SnowEffect = () => {
-    return (
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-            {[...Array(50)].map((_, i) => (
-                <Snowflake key={i} delay={Math.random() * 10} />
+        <div className="fixed inset-0 overflow-hidden pointer-events-none z-[2]">
+            {snowflakes.map((flake) => (
+                <Snowflake key={flake.id} data={flake} />
             ))}
+            <style>{`
+                @keyframes snowfall {
+                    0% {
+                        transform: translateY(-5vh) translateX(0) rotate(0deg);
+                        opacity: 0;
+                    }
+                    10% {
+                        opacity: 1;
+                    }
+                    90% {
+                        opacity: 1;
+                    }
+                    100% {
+                        transform: translateY(105vh) translateX(var(--x-offset)) rotate(360deg);
+                        opacity: 0;
+                    }
+                }
+                .animate-snowfall {
+                    animation: snowfall linear infinite;
+                }
+            `}</style>
         </div>
     )
-}
+})
 
+SnowEffect.displayName = 'SnowEffect'

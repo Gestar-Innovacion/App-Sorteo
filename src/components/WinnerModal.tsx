@@ -1,9 +1,9 @@
+import { memo, useEffect, useRef, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Trophy, Gift, Star } from 'lucide-react'
 import confetti from 'canvas-confetti'
-import { useEffect } from 'react'
 import { Winner } from '../types'
 
 interface WinnerModalProps {
@@ -13,38 +13,109 @@ interface WinnerModalProps {
     onNextPrize: () => void
 }
 
-export function WinnerModal({ isOpen, onOpenChange, winner, onNextPrize }: WinnerModalProps) {
+// Datos estáticos para estrellas (pre-calculados)
+const STAR_POSITIONS = Array.from({ length: 10 }, (_, i) => ({
+    id: i,
+    top: `${(i * 10) % 100}%`,
+    left: `${(i * 12 + 5) % 100}%`,
+    delay: i * 0.2,
+    scale: 0.5 + (i % 3) * 0.2,
+}))
+
+// Componente de estrellas memoizado con CSS puro
+const AnimatedStars = memo(() => (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {STAR_POSITIONS.map((star) => (
+            <div
+                key={star.id}
+                className="absolute text-yellow-200/50 animate-winner-star"
+                style={{
+                    top: star.top,
+                    left: star.left,
+                    transform: `scale(${star.scale})`,
+                    animationDelay: `${star.delay}s`,
+                }}
+            >
+                <Star className="h-4 w-4" />
+            </div>
+        ))}
+        <style>{`
+            @keyframes winner-star {
+                0%, 100% { 
+                    transform: translateY(0) rotate(0deg); 
+                    opacity: 0.3; 
+                }
+                50% { 
+                    transform: translateY(-20px) rotate(180deg); 
+                    opacity: 0.8; 
+                }
+            }
+            .animate-winner-star {
+                animation: winner-star 6s ease-in-out infinite;
+            }
+        `}</style>
+    </div>
+))
+AnimatedStars.displayName = 'AnimatedStars'
+
+export const WinnerModal = memo(function WinnerModal({ 
+    isOpen, 
+    onOpenChange, 
+    winner, 
+    onNextPrize 
+}: WinnerModalProps) {
+    const intervalRef = useRef<NodeJS.Timeout | null>(null)
+
     useEffect(() => {
         if (isOpen && winner) {
-            console.log('WinnerModal: Iniciando confeti, winner:', winner)
-            const duration = 5 * 1000;
-            const animationEnd = Date.now() + duration;
-            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+            const duration = 4 * 1000
+            const animationEnd = Date.now() + duration
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 }
 
-            function randomInRange(min: number, max: number) {
-                return Math.random() * (max - min) + min;
-            }
-
-            const interval: NodeJS.Timeout = setInterval(function () {
-                const timeLeft = animationEnd - Date.now();
+            intervalRef.current = setInterval(() => {
+                const timeLeft = animationEnd - Date.now()
 
                 if (timeLeft <= 0) {
-                    return clearInterval(interval);
+                    if (intervalRef.current) {
+                        clearInterval(intervalRef.current)
+                        intervalRef.current = null
+                    }
+                    return
                 }
 
-                const particleCount = 50 * (timeLeft / duration);
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-            }, 250);
+                const particleCount = 30 * (timeLeft / duration)
+                confetti({
+                    ...defaults,
+                    particleCount,
+                    origin: { x: Math.random() * 0.4 + 0.1, y: Math.random() - 0.2 }
+                })
+                confetti({
+                    ...defaults,
+                    particleCount,
+                    origin: { x: Math.random() * 0.4 + 0.5, y: Math.random() - 0.2 }
+                })
+            }, 300)
 
-            return () => clearInterval(interval);
+            return () => {
+                if (intervalRef.current) {
+                    clearInterval(intervalRef.current)
+                    intervalRef.current = null
+                }
+            }
         }
-    }, [isOpen, winner]);
+    }, [isOpen, winner])
 
-    console.log('WinnerModal render - isOpen:', isOpen, 'winner:', winner)
+    // Memoizar datos del ganador para evitar recálculos
+    const winnerDisplay = useMemo(() => {
+        if (!winner) return null
+        return {
+            name: winner.participant_name,
+            ticket: winner.ticket_number,
+            prize: winner.prize_name,
+        }
+    }, [winner])
 
-    if (!winner) {
-        console.log('WinnerModal: No hay winner, no se renderiza')
+    if (!winner || !winnerDisplay) {
         return null
     }
 
@@ -53,15 +124,16 @@ export function WinnerModal({ isOpen, onOpenChange, winner, onNextPrize }: Winne
             <DialogContent className="bg-transparent border-none p-0 overflow-visible max-w-2xl z-[100]">
                 <DialogTitle className="sr-only">Ganador del Sorteo</DialogTitle>
                 <DialogDescription className="sr-only">
-                    {winner.participant_name} ha ganado {winner.prize_name}
+                    {winnerDisplay.name} ha ganado {winnerDisplay.prize}
                 </DialogDescription>
                 <motion.div
                     initial={{ opacity: 0, scale: 0.5 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.5 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 20 }}
                     className="relative z-[101]"
                 >
-                    {/* Forma orgánica de fondo */}
+                    {/* Formas de fondo simplificadas */}
                     <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 rounded-[60px] transform rotate-3 scale-105 blur-sm" />
                     <div className="absolute inset-0 bg-gradient-to-tl from-yellow-300 via-orange-400 to-red-400 rounded-[70px] transform -rotate-2" />
 
@@ -70,7 +142,6 @@ export function WinnerModal({ isOpen, onOpenChange, winner, onNextPrize }: Winne
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
                             className="flex flex-col items-center justify-center relative"
                         >
                             <motion.div
@@ -89,15 +160,15 @@ export function WinnerModal({ isOpen, onOpenChange, winner, onNextPrize }: Winne
                                 className="text-center text-white relative z-10"
                             >
                                 <h2 className="mb-6">
-                                    <span className="text-6xl md:text-7xl font-extrabold bg-gradient-to-r from-cyan-400 via-coral-400 via-yellow-300 to-green-400 bg-clip-text text-transparent animate-pulse block mb-2">
+                                    <span className="text-6xl md:text-7xl font-extrabold bg-gradient-to-r from-cyan-400 via-yellow-300 to-green-400 bg-clip-text text-transparent block mb-2">
                                         ALOHA
                                     </span>
                                     <span className="text-4xl md:text-5xl font-bold text-white block">¡Tenemos un Ganador!</span>
                                 </h2>
                                 <div className="bg-white/20 backdrop-blur-md rounded-3xl p-6 mb-6">
-                                    <h3 className="text-4xl font-bold mb-3">{winner.participant_name}</h3>
-                                    <p className="text-2xl mb-3">Número: {winner.ticket_number}</p>
-                                    <p className="text-3xl font-semibold">Premio: {winner.prize_name}</p>
+                                    <h3 className="text-4xl font-bold mb-3">{winnerDisplay.name}</h3>
+                                    <p className="text-2xl mb-3">Número: {winnerDisplay.ticket}</p>
+                                    <p className="text-3xl font-semibold">Premio: {winnerDisplay.prize}</p>
                                 </div>
                             </motion.div>
 
@@ -118,35 +189,11 @@ export function WinnerModal({ isOpen, onOpenChange, winner, onNextPrize }: Winne
                                 </Button>
                             </div>
 
-                            {/* Estrellas animadas */}
-                            {[...Array(20)].map((_, i) => (
-                                <motion.div
-                                    key={i}
-                                    className="absolute text-yellow-200 opacity-50"
-                                    initial={{
-                                        top: `${Math.random() * 100}%`,
-                                        left: `${Math.random() * 100}%`,
-                                        scale: Math.random() * 0.5 + 0.5,
-                                    }}
-                                    animate={{
-                                        top: `${Math.random() * 100}%`,
-                                        left: `${Math.random() * 100}%`,
-                                        rotate: 360,
-                                        scale: Math.random() * 0.5 + 0.5,
-                                    }}
-                                    transition={{
-                                        duration: Math.random() * 20 + 10,
-                                        repeat: Infinity,
-                                        ease: "linear",
-                                    }}
-                                >
-                                    <Star className="h-4 w-4" />
-                                </motion.div>
-                            ))}
+                            <AnimatedStars />
                         </motion.div>
                     </div>
                 </motion.div>
             </DialogContent>
         </Dialog>
     )
-}
+})
