@@ -1,7 +1,8 @@
 // 'https://hundred.com.co'
 
 //const URL_BASE = 'https://hundred.com.co';
-const URL_BASE = 'http://localhost:8000';   
+//const URL_BASE = 'http://localhost:8000';   
+export const URL_BASE = 'https://api-test.hundred.com.co';
 
 export const URL_LOGIN = `${URL_BASE}/login`;
 export const URL_LOGOUT = `${URL_LOGIN}/logout`;

@@ -186,13 +186,14 @@ const AdminDashboard = () => {
     }
 
     const handleAddPrize = async (newPrize: Omit<Prize, 'id_prize' | 'sorteado'>) => {
-        const prize: Prize = {
-            ...newPrize,
-            id_prize: 0, // This will be replaced by the backend
-            sorteado: false
+        // Solo enviar los campos necesarios, sin id_prize ni sorteado
+        const prizeData = {
+            name: newPrize.name,
+            range_start: newPrize.range_start,
+            range_end: newPrize.range_end
         }
 
-        const responsePrize = await request(URL_PRIZE, "POST", prize)
+        const responsePrize = await request(URL_PRIZE, "POST", prizeData)
 
         if (responsePrize.status_code === 200) {
             const updatedPrizes = [...prizes, responsePrize.data]
@@ -589,8 +590,9 @@ const AdminDashboard = () => {
 
         const responseDeleteWinner = await request(URL_WINNER_FILTER, "DELETE", {
             "id_winner": winnerId,
+            "id_prize": winnerToDelete.id_prize,
             "id_participant": winnerToDelete.id_participant,
-            "id_prize": winnerToDelete.id_prize
+            "drawdate": winnerToDelete.drawDate || new Date().toISOString()
         })
 
         if (responseDeleteWinner.status_code === 200) {
@@ -657,6 +659,18 @@ const AdminDashboard = () => {
         }
     }
 
+    // Función para recargar participantes desde la API
+    const reloadParticipants = async () => {
+        try {
+            const response = await request(URL_PARTICIPANT, 'GET')
+            if (response.status_code === 200) {
+                setParticipants(response.data || [])
+            }
+        } catch (err) {
+            console.error('Error al recargar participantes:', err)
+        }
+    }
+
     const handleAddParticipant = async (newParticipant: { name: string; cedula: string; ticket_number?: string }) => {
         const participant = {
             ...newParticipant,
@@ -667,8 +681,8 @@ const AdminDashboard = () => {
             const responseParticipant = await request(URL_PARTICIPANT, "POST", participant);
 
             if (responseParticipant.status_code === 200) {
-                const updatedParticipants = [...participants, responseParticipant.data]
-                setParticipants(updatedParticipants)
+                // Recargar lista desde la API para asegurar sincronización
+                await reloadParticipants()
                 toast({
                     variant: "success",
                     title: "Participante añadido",
@@ -706,10 +720,8 @@ const AdminDashboard = () => {
             });
 
             if (responseParticipant.status_code === 200) {
-                const updatedParticipants = participants.map(p =>
-                    p.id_participant === updatedParticipant.id_participant ? responseParticipant.data : p
-                )
-                setParticipants(updatedParticipants)
+                // Recargar lista desde la API para asegurar sincronización
+                await reloadParticipants()
                 toast({
                     variant: "success",
                     title: "Participante actualizado",

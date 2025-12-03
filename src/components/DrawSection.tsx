@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, memo } from 'react'
+import { useState, useMemo, useCallback, memo, forwardRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { Star, AlertCircle } from 'lucide-react'
@@ -41,20 +41,23 @@ const DecorativeStars = memo(() => (
 ))
 DecorativeStars.displayName = 'DecorativeStars'
 
-// Componente memoizado para cada tarjeta de premio
-const PrizeCard = memo(({ 
+interface PrizeCardProps {
+    prize: Prize
+    eligibleCount: number
+    onSelect: () => void
+}
+
+// Componente con forwardRef para que AnimatePresence pueda pasar refs
+const PrizeCard = memo(forwardRef<HTMLDivElement, PrizeCardProps>(({ 
     prize, 
     eligibleCount, 
     onSelect 
-}: { 
-    prize: Prize
-    eligibleCount: number
-    onSelect: () => void 
-}) => {
+}, ref) => {
     const isDisabled = eligibleCount === 0 || prize.sorteado
 
     return (
         <motion.div
+            ref={ref}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
@@ -80,7 +83,7 @@ const PrizeCard = memo(({
             </Card>
         </motion.div>
     )
-})
+}))
 PrizeCard.displayName = 'PrizeCard'
 
 // Función helper fuera del componente
