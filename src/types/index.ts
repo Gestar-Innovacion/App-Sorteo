@@ -20,7 +20,7 @@ export interface Winner {
   id_winner?: number;
   id_prize: number;
   id_participant: number;
-  drawDate: string;
+  drawdate: string;  // Backend usa minúsculas
   participant_name?: string;
   ticket_number?: string;
   prize_name?: string;

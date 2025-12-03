@@ -58,11 +58,11 @@ const PrizeCard = memo(forwardRef<HTMLDivElement, PrizeCardProps>(({
     return (
         <motion.div
             ref={ref}
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
             layout
         >
             <Card
@@ -134,9 +134,9 @@ export const DrawSection = memo(function DrawSection({ prizes, participants, onS
     return (
         <div className="space-y-8 -mt-2 md:-mt-3">
             {/* Título Aloha destacado */}
-            <div className="text-center pt-4 pb-0 relative">
+            <div className="text-center pt-2 pb-0 relative">
                 <h1 
-                    className="text-6xl md:text-[8rem] lg:text-[10rem] font-normal block mb-0 relative z-10 animate-gradient-text"
+                    className="text-5xl md:text-7xl lg:text-8xl font-normal block mb-0 relative z-10 animate-gradient-text"
                     style={{
                         fontFamily: "'Dancing Script', cursive",
                         background: 'linear-gradient(90deg, #22d3ee, #fb923c, #fde047, #4ade80)',
@@ -146,47 +146,40 @@ export const DrawSection = memo(function DrawSection({ prizes, participants, onS
                         backgroundClip: 'text',
                         lineHeight: '1.1',
                         fontWeight: 700,
-                        filter: 'drop-shadow(0 0 30px rgba(34,211,238,0.6)) drop-shadow(0 0 60px rgba(251,146,60,0.5))',
+                        filter: 'drop-shadow(0 0 20px rgba(34,211,238,0.5)) drop-shadow(0 0 40px rgba(251,146,60,0.4))',
                     }}
                 >
                     Aloha
                 </h1>
             </div>
 
-            <div className="relative mb-16">
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-orange-400 to-yellow-400 opacity-30 filter blur-xl rounded-full"></div>
+            <div className="relative mb-8 md:mb-12">
                 <h2
-                    className="text-4xl md:text-5xl lg:text-6xl font-normal text-center py-3 px-8 relative z-10"
+                    className="text-3xl md:text-4xl lg:text-5xl font-normal text-center py-2 relative z-10 flex items-center justify-center gap-3"
                     style={{
                         fontFamily: "'Dancing Script', cursive",
-                        background: 'linear-gradient(90deg, #22d3ee, #fb923c, #fde047, #4ade80)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
+                        color: 'white',
                         lineHeight: '1.2',
-                        fontWeight: 700,
-                        filter: 'drop-shadow(0 0 20px rgba(34,211,238,0.5))',
-                        paddingTop: '0.75rem',
+                        fontWeight: 600,
+                        textShadow: '0 0 20px rgba(255,255,255,0.3)',
                     }}
                 >
+                    <span className="animate-twinkle-star">
+                        <Star className="w-6 h-6 md:w-8 md:h-8 text-white/80" fill="currentColor" />
+                    </span>
                     Realizar Sorteo
+                    <span className="animate-twinkle-star-delay">
+                        <Star className="w-6 h-6 md:w-8 md:h-8 text-white/80" fill="currentColor" />
+                    </span>
                 </h2>
-                {/* Estrellas con CSS puro en lugar de Framer Motion */}
-                <span className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1/2 animate-spin-slow">
-                    <Star className="text-blue-300 w-16 h-16" />
-                </span>
-                <span className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-1/2 animate-spin-slow-reverse">
-                    <Star className="text-blue-300 w-16 h-16" />
-                </span>
             </div>
 
-            <div className="relative mt-12 md:mt-16">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 opacity-30 blur-3xl" />
-                <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            <div className="relative mt-8 md:mt-10 px-2">
+                <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-2">
                     <AnimatePresence mode="popLayout">
-                        {prizes.map((prize) => (
+                        {prizes.map((prize, index) => (
                             <PrizeCard
-                                key={prize.id_prize}
+                                key={prize.id_prize ?? `prize-${index}`}
                                 prize={prize}
                                 eligibleCount={eligibleParticipantsMap.get(prize.id_prize ?? 0) || 0}
                                 onSelect={() => handleSelectPrize(prize)}
@@ -197,26 +190,29 @@ export const DrawSection = memo(function DrawSection({ prizes, participants, onS
             </div>
             
             <style>{`
-                @keyframes spin-slow {
-                    from { transform: translateY(-50%) translateX(-50%) rotate(0deg); }
-                    to { transform: translateY(-50%) translateX(-50%) rotate(360deg); }
-                }
-                @keyframes spin-slow-reverse {
-                    from { transform: translateY(-50%) translateX(50%) rotate(0deg); }
-                    to { transform: translateY(-50%) translateX(50%) rotate(-360deg); }
-                }
                 @keyframes gradient-text {
                     0%, 100% { background-position: 0% 50%; }
                     50% { background-position: 100% 50%; }
                 }
-                .animate-spin-slow {
-                    animation: spin-slow 20s linear infinite;
-                }
-                .animate-spin-slow-reverse {
-                    animation: spin-slow-reverse 20s linear infinite;
+                @keyframes twinkle-star {
+                    0%, 100% { 
+                        opacity: 0.6; 
+                        transform: scale(0.9) rotate(0deg); 
+                    }
+                    50% { 
+                        opacity: 1; 
+                        transform: scale(1.1) rotate(15deg); 
+                    }
                 }
                 .animate-gradient-text {
                     animation: gradient-text 6s ease infinite;
+                }
+                .animate-twinkle-star {
+                    animation: twinkle-star 2s ease-in-out infinite;
+                }
+                .animate-twinkle-star-delay {
+                    animation: twinkle-star 2s ease-in-out infinite;
+                    animation-delay: 1s;
                 }
             `}</style>
         </div>

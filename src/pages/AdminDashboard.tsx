@@ -196,8 +196,8 @@ const AdminDashboard = () => {
         const responsePrize = await request(URL_PRIZE, "POST", prizeData)
 
         if (responsePrize.status_code === 200) {
-            const updatedPrizes = [...prizes, responsePrize.data]
-            setPrizes(updatedPrizes)
+            // Recargar lista desde la API para asegurar sincronización
+            await reloadPrizes()
             toast({
                 variant: "success",
                 title: "Premio añadido",
@@ -285,6 +285,18 @@ const AdminDashboard = () => {
         }
     }
 
+    // Función para recargar premios desde la API
+    const reloadPrizes = async () => {
+        try {
+            const response = await request(URL_PRIZE, 'GET')
+            if (response.status_code === 200) {
+                setPrizes(response.data || [])
+            }
+        } catch (err) {
+            console.error('Error al recargar premios:', err)
+        }
+    }
+
     const handleUpdatePrize = async (updatedPrize: Prize) => {
         try {
             const responsePrize = await request(URL_PRIZE, "PUT", {
@@ -296,10 +308,8 @@ const AdminDashboard = () => {
             });
 
             if (responsePrize.status_code === 200) {
-                const updatedPrizes = prizes.map(p =>
-                    p.id_prize === updatedPrize.id_prize ? responsePrize.data : p
-                )
-                setPrizes(updatedPrizes)
+                // Recargar lista desde la API para asegurar sincronización
+                await reloadPrizes()
                 toast({
                     variant: "success",
                     title: "Premio actualizado",
@@ -447,7 +457,7 @@ const AdminDashboard = () => {
                 participant_name: savedParticipant.name,
                 ticket_number: savedParticipant.ticket_number || '',
                 prize_name: savedPrize.name,
-                drawDate: new Date().toISOString()
+                drawdate: new Date().toISOString()
             }
             
             console.log('Ganador creado:', newWinner)
@@ -545,15 +555,40 @@ const AdminDashboard = () => {
 
     const handleNextPrize = () => {
         setShowWinnerModal(false)
-        const nextPrize = prizes.find(p => !p.sorteado)
+        
+        // Buscar el siguiente premio que no esté sorteado Y tenga participantes elegibles
+        const nextPrize = prizes.find(p => {
+            if (p.sorteado) return false
+            
+            // Verificar si hay participantes elegibles para este premio
+            const eligibleParticipants = participants.filter(participant => {
+                if (!participant.active || !participant.ticket_number) return false
+                const ticketNum = extractTicketNumber(participant.ticket_number)
+                if (ticketNum === null) return false
+                return ticketNum >= p.range_start && ticketNum <= p.range_end
+            })
+            
+            return eligibleParticipants.length > 0
+        })
+        
         if (nextPrize) {
             handleSelectPrize(nextPrize)
         } else {
-            toast({
-                variant: "default",
-                title: "Sorteo finalizado",
-                description: "Todos los premios han sido sorteados.",
-            })
+            // Verificar si quedan premios sin sortear (aunque sin participantes)
+            const remainingPrizes = prizes.filter(p => !p.sorteado)
+            if (remainingPrizes.length > 0) {
+                toast({
+                    variant: "default",
+                    title: "Sin participantes disponibles",
+                    description: `Quedan ${remainingPrizes.length} premio(s) sin sortear, pero no hay participantes elegibles para ellos.`,
+                })
+            } else {
+                toast({
+                    variant: "default",
+                    title: "Sorteo finalizado",
+                    description: "Todos los premios han sido sorteados.",
+                })
+            }
         }
     }
 
@@ -592,7 +627,7 @@ const AdminDashboard = () => {
             "id_winner": winnerId,
             "id_prize": winnerToDelete.id_prize,
             "id_participant": winnerToDelete.id_participant,
-            "drawdate": winnerToDelete.drawDate || new Date().toISOString()
+            "drawdate": winnerToDelete.drawdate || new Date().toISOString()
         })
 
         if (responseDeleteWinner.status_code === 200) {
@@ -1026,7 +1061,7 @@ const AdminDashboard = () => {
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-semibold text-white text-sm sm:text-base break-words">{winner.participant_name}</p>
                                                     <p className="text-white/80 text-xs sm:text-sm mt-1 break-words">Premio: {winner.prize_name}</p>
-                                                    <p className="text-white/60 text-xs mt-1">Fecha: {new Date(winner.drawDate).toLocaleDateString()}</p>
+                                                    <p className="text-white/60 text-xs mt-1">Fecha: {new Date(winner.drawdate).toLocaleDateString()}</p>
                                                 </div>
                                                 <Button
                                                     variant="ghost"

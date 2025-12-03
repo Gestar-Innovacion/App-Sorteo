@@ -5,69 +5,16 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '@/hooks/use-toast'
-import { Lock, ChevronDown, Eye, EyeOff, Search, Sparkles } from 'lucide-react'
-import { HibiscusFlower } from '@/components/HibiscusFlower'
+import { Lock, ChevronDown, Eye, EyeOff, Search } from 'lucide-react'
 import { Checkbox } from "@/components/ui/checkbox"
 
 import { request } from '@/services/index'
 import { URL_LOGIN } from '@/constants/index'
-import { AuroraBorealis } from '@/components/AuroraBorealis'
-import { SnowEffect } from '@/components/SnowEffect'
 import { Countdown } from '@/components/Countdown'
 import { StylizedClock } from '@/components/StylizedClock'
 import { LookupModal } from '@/components/LookupModal'
 
 import '@/styles/fonts.css'
-
-// Datos estáticos
-const STAR_POSITIONS = [
-    { left: '10%', top: '5%', delay: '0s' },
-    { left: '22%', top: '35%', delay: '0.3s' },
-    { left: '34%', top: '5%', delay: '0.6s' },
-    { left: '46%', top: '35%', delay: '0.9s' },
-    { left: '58%', top: '5%', delay: '1.2s' },
-    { left: '70%', top: '35%', delay: '1.5s' },
-    { left: '82%', top: '5%', delay: '1.8s' },
-    { left: '94%', top: '35%', delay: '2.1s' },
-]
-
-const HIBISCUS_DATA = [
-    { left: '3%', top: '10%', color: 'text-pink-400/50', delay: '0s' },
-    { left: '92%', top: '15%', color: 'text-red-400/50', delay: '0.5s' },
-    { left: '5%', top: '80%', color: 'text-orange-400/50', delay: '1s' },
-    { left: '90%', top: '85%', color: 'text-yellow-400/50', delay: '1.5s' },
-]
-
-// Componentes con CSS puro (sin Framer Motion)
-const DecorativeStars = memo(() => (
-    <>
-        {STAR_POSITIONS.map((pos, i) => (
-            <div
-                key={`star-${i}`}
-                className="absolute animate-star-pulse"
-                style={{ left: pos.left, top: pos.top, animationDelay: pos.delay }}
-            >
-                <Sparkles className="w-5 h-5 md:w-7 md:h-7 text-yellow-300/50" />
-            </div>
-        ))}
-    </>
-))
-DecorativeStars.displayName = 'DecorativeStars'
-
-const DecorativeHibiscus = memo(() => (
-    <>
-        {HIBISCUS_DATA.map((data, i) => (
-            <div
-                key={`hibiscus-${i}`}
-                className={`absolute animate-hibiscus ${data.color}`}
-                style={{ left: data.left, top: data.top, animationDelay: data.delay }}
-            >
-                <HibiscusFlower className="w-16 h-16 md:w-24 md:h-24 lg:w-32 lg:h-32" size={128} />
-            </div>
-        ))}
-    </>
-))
-DecorativeHibiscus.displayName = 'DecorativeHibiscus'
 
 const HomePage = () => {
     const [showLogin, setShowLogin] = useState(false)
@@ -83,7 +30,6 @@ const HomePage = () => {
     const eventDate = useMemo(() => new Date(2025, 11, 20, 15, 0, 0), [])
 
     useEffect(() => {
-        // Marcar como cargado después de un pequeño delay para la animación inicial
         const timer = setTimeout(() => setIsLoaded(true), 100)
         return () => clearTimeout(timer)
     }, [])
@@ -138,17 +84,30 @@ const HomePage = () => {
 
     return (
         <div className="relative min-h-screen overflow-hidden">
-            <AuroraBorealis />
-            <div className="fixed inset-0 bg-black/10 backdrop-blur-sm z-[1]"></div>
-            <SnowEffect />
+            {/* Video de fondo */}
+            <div className="fixed inset-0 z-0">
+                <video
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    preload="auto"
+                    className="absolute w-full h-full object-cover"
+                    style={{ objectFit: 'cover' }}
+                >
+                    {/* MP4 es el formato más compatible */}
+                    <source src="/videos/Beach.mp4" type="video/mp4" />
+                    <source src="/videos/Beach.webm" type="video/webm" />
+                    <source src="/videos/Beach.mov" type="video/quicktime" />
+                </video>
+                {/* Overlay oscuro para mejor legibilidad */}
+                <div className="absolute inset-0 bg-black/30"></div>
+            </div>
 
             <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
                 <div className={`w-full max-w-5xl transition-all duration-700 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
                     <div className="mb-4 md:mb-8 text-center">
                         <div className="text-center mb-8 md:mb-12 relative pt-8 md:pt-16">
-                            <DecorativeStars />
-                            <DecorativeHibiscus />
-                            
                             <h1 
                                 className="text-8xl md:text-[12rem] lg:text-[15rem] font-normal block mb-8 md:mb-12 relative z-10 animate-gradient-text"
                                 style={{
@@ -186,7 +145,7 @@ const HomePage = () => {
                         </div>
 
                         <div className={`w-full md:w-2/5 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'}`}>
-                            <div className="rounded-3xl bg-white/5 backdrop-blur-sm border border-white/10 p-4 md:p-6 shadow-2xl">
+                            <div className="rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-4 md:p-6 shadow-2xl">
                                 <div className="mb-6 md:mb-8 flex justify-center space-x-4">
                                     <img
                                         src="/forza-logo.png"
@@ -282,14 +241,6 @@ const HomePage = () => {
             <LookupModal isOpen={showLookupModal} onOpenChange={setShowLookupModal} />
             
             <style>{`
-                @keyframes star-pulse {
-                    0%, 100% { opacity: 0.2; transform: scale(0.5) rotate(0deg); }
-                    50% { opacity: 0.8; transform: scale(1.3) rotate(180deg); }
-                }
-                @keyframes hibiscus {
-                    0%, 100% { opacity: 0.4; transform: scale(0.9) rotate(-45deg); }
-                    50% { opacity: 0.7; transform: scale(1.2) rotate(0deg); }
-                }
                 @keyframes gradient-text {
                     0%, 100% { background-position: 0% 50%; }
                     50% { background-position: 100% 50%; }
@@ -298,8 +249,6 @@ const HomePage = () => {
                     from { opacity: 0; transform: translateY(10px); }
                     to { opacity: 1; transform: translateY(0); }
                 }
-                .animate-star-pulse { animation: star-pulse 4s ease-in-out infinite; }
-                .animate-hibiscus { animation: hibiscus 5s ease-in-out infinite; }
                 .animate-gradient-text { animation: gradient-text 6s ease infinite; }
                 .animate-fade-in { animation: fade-in 0.3s ease-out; }
             `}</style>

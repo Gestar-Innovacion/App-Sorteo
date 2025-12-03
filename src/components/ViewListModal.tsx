@@ -25,6 +25,9 @@ export function ViewListModal({ isOpen, onOpenChange, items = [], type, onDelete
 
     useEffect(() => {
         const filtered = items.filter((item) => {
+            // Verificar que item sea un objeto válido
+            if (!item || typeof item !== 'object') return false;
+            
             if (type === 'prizes' && 'name' in item) {
                 const prize = item as Prize;
                 return (

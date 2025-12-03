@@ -12,7 +12,7 @@ interface Winner {
     id_winner: number;
     id_prize: number;
     id_participant: number;
-    drawDate: string;
+    drawdate: string;
 }
 
 interface Prize {
@@ -70,7 +70,7 @@ export default function WinnerManagement() {
                                 <TableCell>{winner.id_winner}</TableCell>
                                 <TableCell className="font-semibold">{getParticipantName(winner.id_participant)}</TableCell>
                                 <TableCell>{getPrizeName(winner.id_prize)}</TableCell>
-                                <TableCell>{new Date(winner.drawDate).toLocaleDateString()}</TableCell>
+                                <TableCell>{new Date(winner.drawdate).toLocaleDateString()}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>

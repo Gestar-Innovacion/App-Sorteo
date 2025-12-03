@@ -23,7 +23,7 @@ interface Winner {
     id_winner: number;
     id_prize: number;
     id_participant: number;
-    drawDate: string;
+    drawdate: string;
 }
 
 const DrawSystem = () => {
@@ -58,7 +58,7 @@ const DrawSystem = () => {
             id_winner: Date.now(),
             id_prize: selectedPrize.id_prize,
             id_participant: selectedParticipant.id_participant,
-            drawDate: new Date().toISOString()
+            drawdate: new Date().toISOString()
         };
 
         // Update local storage
