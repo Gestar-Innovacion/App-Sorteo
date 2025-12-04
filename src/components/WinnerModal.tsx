@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/button'
 import { Trophy, Gift, Star } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { Winner } from '../types'
+import { useSounds } from '@/hooks/useSounds'
 
 interface WinnerModalProps {
     isOpen: boolean
     onOpenChange: (open: boolean) => void
     winner: Winner | null
     onNextPrize: () => void
+    isMuted?: boolean
 }
 
 // Datos estáticos para estrellas (pre-calculados)
@@ -62,12 +64,17 @@ export const WinnerModal = memo(function WinnerModal({
     isOpen, 
     onOpenChange, 
     winner, 
-    onNextPrize 
+    onNextPrize,
+    isMuted = false
 }: WinnerModalProps) {
     const intervalRef = useRef<NodeJS.Timeout | null>(null)
+    const { playFanfare } = useSounds(isMuted)
 
     useEffect(() => {
         if (isOpen && winner) {
+            // Reproducir fanfarria de victoria
+            playFanfare()
+            
             const duration = 4 * 1000
             const animationEnd = Date.now() + duration
             const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 }
@@ -103,7 +110,7 @@ export const WinnerModal = memo(function WinnerModal({
                 }
             }
         }
-    }, [isOpen, winner])
+    }, [isOpen, winner, playFanfare])
 
     // Memoizar datos del ganador para evitar recálculos
     const winnerDisplay = useMemo(() => {
@@ -121,7 +128,7 @@ export const WinnerModal = memo(function WinnerModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="bg-transparent border-none p-0 overflow-visible max-w-2xl z-[100]">
+            <DialogContent className="bg-transparent border-none p-0 overflow-visible max-w-[95vw] sm:max-w-2xl z-[100]">
                 <DialogTitle className="sr-only">Ganador del Sorteo</DialogTitle>
                 <DialogDescription className="sr-only">
                     {winnerDisplay.name} ha ganado {winnerDisplay.prize}
@@ -134,11 +141,11 @@ export const WinnerModal = memo(function WinnerModal({
                     className="relative z-[101]"
                 >
                     {/* Formas de fondo simplificadas */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 rounded-[60px] transform rotate-3 scale-105 blur-sm" />
-                    <div className="absolute inset-0 bg-gradient-to-tl from-yellow-300 via-orange-400 to-red-400 rounded-[70px] transform -rotate-2" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 rounded-[30px] sm:rounded-[60px] transform rotate-3 scale-105 blur-sm" />
+                    <div className="absolute inset-0 bg-gradient-to-tl from-emerald-400 via-teal-400 to-cyan-500 rounded-[35px] sm:rounded-[70px] transform -rotate-2" />
 
                     {/* Contenido principal */}
-                    <div className="relative bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 rounded-[50px] p-8 overflow-hidden">
+                    <div className="relative bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 rounded-[25px] sm:rounded-[50px] p-4 sm:p-8 overflow-hidden">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -148,9 +155,9 @@ export const WinnerModal = memo(function WinnerModal({
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1, rotate: 360 }}
                                 transition={{ type: "spring", stiffness: 260, damping: 20 }}
-                                className="mb-6 relative z-10"
+                                className="mb-4 sm:mb-6 relative z-10"
                             >
-                                <Trophy className="w-32 h-32 text-yellow-200" />
+                                <Trophy className="w-20 h-20 sm:w-32 sm:h-32 text-yellow-300" />
                             </motion.div>
 
                             <motion.div
@@ -159,32 +166,32 @@ export const WinnerModal = memo(function WinnerModal({
                                 transition={{ delay: 0.2 }}
                                 className="text-center text-white relative z-10"
                             >
-                                <h2 className="mb-6">
-                                    <span className="text-6xl md:text-7xl font-extrabold bg-gradient-to-r from-cyan-400 via-yellow-300 to-green-400 bg-clip-text text-transparent block mb-2">
+                                <h2 className="mb-4 sm:mb-6">
+                                    <span className="text-4xl sm:text-6xl md:text-7xl font-extrabold bg-gradient-to-r from-cyan-400 via-yellow-300 to-green-400 bg-clip-text text-transparent block mb-2">
                                         ALOHA
                                     </span>
-                                    <span className="text-4xl md:text-5xl font-bold text-white block">¡Tenemos un Ganador!</span>
+                                    <span className="text-2xl sm:text-4xl md:text-5xl font-bold text-white block">¡Tenemos un Ganador!</span>
                                 </h2>
-                                <div className="bg-white/20 backdrop-blur-md rounded-3xl p-6 mb-6">
-                                    <h3 className="text-4xl font-bold mb-3">{winnerDisplay.name}</h3>
-                                    <p className="text-2xl mb-3">Número: {winnerDisplay.ticket}</p>
-                                    <p className="text-3xl font-semibold">Premio: {winnerDisplay.prize}</p>
+                                <div className="bg-white/20 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6">
+                                    <h3 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-3">{winnerDisplay.name}</h3>
+                                    <p className="text-lg sm:text-2xl mb-2 sm:mb-3">Número: {winnerDisplay.ticket}</p>
+                                    <p className="text-xl sm:text-3xl font-semibold">Premio: {winnerDisplay.prize}</p>
                                 </div>
                             </motion.div>
 
-                            <div className="flex justify-center space-x-4 mt-6 relative z-10">
+                            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:space-x-4 mt-4 sm:mt-6 relative z-10 w-full px-4 sm:px-0">
                                 <Button
                                     onClick={() => onOpenChange(false)}
-                                    className="bg-white/20 hover:bg-white/30 text-white border-2 border-white/50 rounded-full px-8 py-6 text-lg font-semibold backdrop-blur-sm transition-all duration-300 hover:scale-105"
+                                    className="bg-white/20 hover:bg-white/30 text-white border-2 border-white/50 rounded-full px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg font-semibold backdrop-blur-sm transition-all duration-300 hover:scale-105"
                                 >
-                                    <Star className="mr-2 h-5 w-5" />
+                                    <Star className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                                     Cerrar
                                 </Button>
                                 <Button
                                     onClick={onNextPrize}
-                                    className="bg-green-500 hover:bg-green-600 text-white rounded-full px-8 py-6 text-lg font-semibold transition-all duration-300 hover:scale-105"
+                                    className="bg-green-500 hover:bg-green-600 text-white rounded-full px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg font-semibold transition-all duration-300 hover:scale-105"
                                 >
-                                    <Gift className="mr-2 h-5 w-5" />
+                                    <Gift className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                                     Siguiente Premio
                                 </Button>
                             </div>

@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import confetti from 'canvas-confetti'
 import { useEffect, useState, useRef } from 'react'
 import { Gift, Star, Sparkles, Zap } from 'lucide-react'
+import { useSounds } from '@/hooks/useSounds'
 
 interface DrawingModalProps {
     isOpen: boolean
@@ -11,6 +12,7 @@ interface DrawingModalProps {
     winningNumber?: number
     rangeStart?: number
     rangeEnd?: number
+    isMuted?: boolean
 }
 
 // Datos estáticos para partículas (pre-calculados)
@@ -92,19 +94,22 @@ export const DrawingModal = memo(function DrawingModal({
     onOpenChange, 
     winningNumber, 
     rangeStart = 0, 
-    rangeEnd = 999 
+    rangeEnd = 999,
+    isMuted = false
 }: DrawingModalProps) {
     const [currentNumber, setCurrentNumber] = useState(0)
     const [isRevealing, setIsRevealing] = useState(false)
     const [finalNumber, setFinalNumber] = useState<number | null>(null)
     const timeoutsRef = useRef<NodeJS.Timeout[]>([])
+    const { playDrumroll, stop } = useSounds(isMuted)
 
     // Limpiar timeouts al desmontar
     useEffect(() => {
         return () => {
             timeoutsRef.current.forEach(t => clearTimeout(t))
+            stop('drumroll')
         }
-    }, [])
+    }, [stop])
 
     useEffect(() => {
         if (isOpen) {
@@ -115,39 +120,29 @@ export const DrawingModal = memo(function DrawingModal({
             setIsRevealing(false)
             setFinalNumber(null)
             
+            // Reproducir sonido de tambores
+            playDrumroll()
+            
             const initialNumber = Math.floor(Math.random() * (rangeEnd - rangeStart + 1)) + rangeStart
             setCurrentNumber(initialNumber)
             
             let confettiCount = 0
-            const maxConfettiShots = 4
+            const maxConfettiShots = 3
             let iteration = 0
-            const maxIterations = 30
-            let currentAnimNumber = initialNumber
+            const maxIterations = 20
             
             const animateNumber = () => {
                 iteration++
-                const progress = iteration / maxIterations
-                const speed = 50 + (progress * progress * 400)
                 
-                if (iteration >= maxIterations - 5 && winningNumber !== undefined) {
-                    const remainingIterations = maxIterations - iteration
-                    const searchRange = Math.max(1, remainingIterations * 2)
-                    const randomOffset = Math.floor(Math.random() * searchRange * 2) - searchRange
-                    currentAnimNumber = Math.max(rangeStart, Math.min(rangeEnd, (winningNumber || 0) + randomOffset))
-                    setCurrentNumber(currentAnimNumber)
-                } else if (winningNumber !== undefined && iteration > maxIterations * 0.3) {
-                    const distanceToWinner = Math.abs(currentAnimNumber - winningNumber)
-                    const stepSize = Math.max(1, Math.floor(distanceToWinner * (0.2 + (1 - progress) * 0.3)))
-                    const direction = winningNumber > currentAnimNumber ? 1 : -1
-                    currentAnimNumber = Math.max(rangeStart, Math.min(rangeEnd, currentAnimNumber + (direction * stepSize)))
-                    setCurrentNumber(currentAnimNumber)
-                } else {
-                    currentAnimNumber = Math.floor(Math.random() * (rangeEnd - rangeStart + 1)) + rangeStart
-                    setCurrentNumber(currentAnimNumber)
-                }
+                // Velocidad: empieza rápido (60ms) y va más lento al final (250ms)
+                const progress = iteration / maxIterations
+                const speed = 60 + (progress * progress * 190)
                 
                 if (iteration >= maxIterations) {
+                    // Terminó - mostrar ganador
                     setIsRevealing(true)
+                    stop('drumroll')
+                    
                     if (winningNumber !== undefined) {
                         setFinalNumber(winningNumber)
                         setCurrentNumber(winningNumber)
@@ -163,6 +158,10 @@ export const DrawingModal = memo(function DrawingModal({
                         timeoutsRef.current.push(confettiTimeout)
                     }
                 } else {
+                    // Números aleatorios dentro del rango
+                    const randomNumber = Math.floor(Math.random() * (rangeEnd - rangeStart + 1)) + rangeStart
+                    setCurrentNumber(randomNumber)
+                    
                     const nextTimeout = setTimeout(animateNumber, speed)
                     timeoutsRef.current.push(nextTimeout)
                 }
@@ -194,9 +193,10 @@ export const DrawingModal = memo(function DrawingModal({
             return () => {
                 timeoutsRef.current.forEach(timeout => clearTimeout(timeout))
                 timeoutsRef.current = []
+                stop('drumroll')
             }
         }
-    }, [isOpen, winningNumber, rangeStart, rangeEnd])
+    }, [isOpen, winningNumber, rangeStart, rangeEnd, playDrumroll, stop])
 
     const displayNumber = useMemo(() => 
         (finalNumber ?? currentNumber).toString().padStart(3, '0'),
@@ -205,14 +205,14 @@ export const DrawingModal = memo(function DrawingModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="bg-transparent border-none p-0 overflow-visible max-w-3xl">
+            <DialogContent className="bg-transparent border-none p-0 overflow-visible max-w-[95vw] sm:max-w-3xl">
                 <DialogTitle className="sr-only">Sorteando</DialogTitle>
                 <motion.div
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.5, opacity: 0 }}
                     transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                    className="relative bg-gradient-to-br from-purple-600 via-pink-500 to-orange-500 rounded-[4rem] p-12 overflow-hidden shadow-2xl"
+                    className="relative bg-gradient-to-br from-teal-500 via-cyan-600 to-blue-600 rounded-[2rem] sm:rounded-[4rem] p-6 sm:p-12 overflow-hidden shadow-2xl"
                 >
                     {/* Efecto de brillo con CSS */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shine" />
@@ -220,21 +220,21 @@ export const DrawingModal = memo(function DrawingModal({
                     <ModalParticles />
 
                     <div className="text-center relative z-10">
-                        <div className="inline-block mb-6 animate-wiggle">
-                            <Gift className="w-24 h-24 mx-auto text-yellow-300 drop-shadow-2xl" />
+                        <div className="inline-block mb-4 sm:mb-6 animate-wiggle">
+                            <Gift className="w-16 h-16 sm:w-24 sm:h-24 mx-auto text-yellow-300 drop-shadow-2xl" />
                         </div>
                         
-                        <h2 className="text-6xl md:text-7xl lg:text-8xl font-extrabold mb-8 drop-shadow-lg">
+                        <h2 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold mb-4 sm:mb-8 drop-shadow-lg">
                             <span className="bg-gradient-to-r from-cyan-400 via-yellow-300 to-green-400 bg-clip-text text-transparent">
                                 ALOHA
                             </span>
                             <br />
-                            <span className="text-white text-4xl md:text-5xl">SORTEANDO</span>
+                            <span className="text-white text-2xl sm:text-4xl md:text-5xl">SORTEANDO</span>
                         </h2>
                     </div>
 
                     {/* Número grande */}
-                    <div className="relative z-10 mb-8">
+                    <div className="relative z-10 mb-4 sm:mb-8">
                         <motion.div
                             key={isRevealing ? 'final' : currentNumber}
                             initial={isRevealing ? { scale: 0.5, opacity: 0 } : { scale: 0.9, opacity: 0.8 }}
@@ -243,7 +243,7 @@ export const DrawingModal = memo(function DrawingModal({
                             className="relative"
                         >
                             <div 
-                                className={`text-9xl md:text-[12rem] font-black text-center drop-shadow-2xl font-mono ${
+                                className={`text-6xl sm:text-9xl md:text-[12rem] font-black text-center drop-shadow-2xl font-mono ${
                                     isRevealing ? 'text-yellow-300 animate-glow' : 'text-white'
                                 }`}
                             >
@@ -254,19 +254,19 @@ export const DrawingModal = memo(function DrawingModal({
 
                     {/* Texto de estado */}
                     <div className="relative z-10">
-                        <p className={`text-3xl md:text-4xl text-center font-bold drop-shadow-lg flex items-center justify-center gap-3 ${
+                        <p className={`text-xl sm:text-3xl md:text-4xl text-center font-bold drop-shadow-lg flex items-center justify-center gap-2 sm:gap-3 ${
                             isRevealing ? 'text-yellow-300' : 'text-yellow-200'
                         }`}>
                             {isRevealing ? (
                                 <>
-                                    <Zap className="w-8 h-8" />
+                                    <Zap className="w-5 h-5 sm:w-8 sm:h-8" />
                                     <span>¡GANADOR SELECCIONADO!</span>
-                                    <Zap className="w-8 h-8" />
+                                    <Zap className="w-5 h-5 sm:w-8 sm:h-8" />
                                 </>
                             ) : (
                                 <>
-                                    <Sparkles className="w-8 h-8 animate-spin" />
-                                    <span>Aloha! Seleccionando ganador...</span>
+                                    <Sparkles className="w-5 h-5 sm:w-8 sm:h-8 animate-spin" />
+                                    <span className="text-sm sm:text-xl md:text-3xl">Aloha! Seleccionando ganador...</span>
                                 </>
                             )}
                         </p>
@@ -275,7 +275,7 @@ export const DrawingModal = memo(function DrawingModal({
                     <FloatingStars />
 
                     {/* Borde brillante con CSS */}
-                    <div className="absolute inset-0 border-4 border-yellow-300/50 rounded-[4rem] animate-border-glow" />
+                    <div className="absolute inset-0 border-2 sm:border-4 border-cyan-300/50 rounded-[2rem] sm:rounded-[4rem] animate-border-glow" />
                 </motion.div>
                 
                 <style>{`

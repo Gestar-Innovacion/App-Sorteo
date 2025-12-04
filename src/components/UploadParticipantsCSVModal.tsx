@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
-import { Upload, AlertCircle, FileText, X } from 'lucide-react'
+import { Upload, AlertCircle, FileText, X, Download } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface UploadParticipantsCSVModalProps {
@@ -123,13 +123,25 @@ export function UploadParticipantsCSVModal({ isOpen, onOpenChange, onUploadSucce
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="text-sm text-white/80 bg-white/10 p-6 rounded-2xl flex items-start gap-4"
+                        className="text-sm text-white/80 bg-white/10 p-6 rounded-2xl"
                     >
-                        <AlertCircle className="h-7 w-7 mt-1 flex-shrink-0 text-yellow-300" />
-                        <p>
-                            El archivo CSV debe estar delimitado por punto y coma (;) y contener las columnas en el siguiente orden: <span className="font-semibold">name</span>, <span className="font-semibold">cedula</span>, <span className="font-semibold">ticket_number</span>.
-                            Los campos 'active' y 'asistencia' se establecerán automáticamente.
-                        </p>
+                        <div className="flex items-start gap-4">
+                            <AlertCircle className="h-7 w-7 mt-1 flex-shrink-0 text-yellow-300" />
+                            <p>
+                                El archivo CSV debe estar delimitado por punto y coma (;) y contener las columnas en el siguiente orden: <span className="font-semibold">name</span>, <span className="font-semibold">cedula</span>, <span className="font-semibold">ticket_number</span>.
+                                Los campos 'active' y 'asistencia' se establecerán automáticamente.
+                            </p>
+                        </div>
+                        <motion.a
+                            href="/plantillas/plantilla_participantes.csv"
+                            download="plantilla_participantes.csv"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-all duration-300"
+                        >
+                            <Download className="h-4 w-4" />
+                            Descargar Plantilla
+                        </motion.a>
                     </motion.div>
                 </div>
             </DialogContent>

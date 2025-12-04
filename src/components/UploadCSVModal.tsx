@@ -1,4 +1,4 @@
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Download } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useCallback, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -118,7 +118,7 @@ const UploadCSVModal = ({ isOpen, onOpenChange, onUploadCSV }: Props) => {
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px] w-[95vw] max-w-[95vw] sm:w-full bg-gradient-to-br from-sky-700 to-indigo-900 text-white rounded-3xl border-2 border-white/20 shadow-xl">
+            <DialogContent className="sm:max-w-[425px] w-[95vw] max-w-[95vw] sm:w-full bg-gradient-to-br from-slate-800 via-teal-900 to-cyan-900 text-white rounded-3xl border-2 border-white/20 shadow-xl">
                 <DialogHeader>
                     <DialogTitle className="text-3xl font-bold text-center text-white">
                         Cargar Premios CSV
@@ -146,6 +146,16 @@ const UploadCSVModal = ({ isOpen, onOpenChange, onUploadCSV }: Props) => {
                         <p className="text-sm text-white/80">
                             Los rangos deben ser números de 3 dígitos entre 001 y 500. Los rangos pueden superponerse.
                         </p>
+                        <motion.a
+                            href="/plantillas/plantilla_premios.csv"
+                            download="plantilla_premios.csv"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-all duration-300"
+                        >
+                            <Download className="h-4 w-4" />
+                            Descargar Plantilla
+                        </motion.a>
                     </div>
 
                     <motion.div

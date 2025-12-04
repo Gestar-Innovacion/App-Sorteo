@@ -159,79 +159,79 @@ const HomePage = () => {
                                     />
                                 </div>
 
-                                {!showLogin ? (
+                                    {!showLogin ? (
                                     <div className="space-y-4 animate-fade-in">
-                                        <Button
-                                            onClick={() => setShowLogin(true)}
-                                            variant="outline"
+                                                <Button
+                                                    onClick={() => setShowLogin(true)}
+                                                    variant="outline"
                                             className="w-full border-white/10 text-white hover:bg-white/10 py-4 md:py-5 text-sm md:text-base rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
-                                        >
-                                            <Lock className="mr-2 h-4 w-4" />
-                                            Administrador
-                                        </Button>
-                                        <Button
-                                            onClick={() => setShowLookupModal(true)}
-                                            className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-4 md:py-5 text-sm md:text-base rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
-                                        >
-                                            <Search className="mr-2 h-4 w-4" />
-                                            Registrar Numero de Sorteo
-                                        </Button>
+                                                >
+                                                    <Lock className="mr-2 h-4 w-4" />
+                                                    Administrador
+                                                </Button>
+                                                <Button
+                                                    onClick={() => setShowLookupModal(true)}
+                                            className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white py-4 md:py-5 text-sm md:text-base rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+                                                >
+                                                    <Search className="mr-2 h-4 w-4" />
+                                                    Registrar Numero de Sorteo
+                                                </Button>
                                     </div>
-                                ) : (
+                                    ) : (
                                     <form onSubmit={handleLogin} className="space-y-4 animate-fade-in">
-                                        <Input
-                                            type="text"
-                                            placeholder="Usuario"
-                                            value={username}
-                                            onChange={(e) => setUsername(e.target.value)}
-                                            className="bg-white/10 border-white/10 text-white placeholder:text-white/50 rounded-xl py-4 md:py-5"
-                                        />
-                                        <div className="relative">
                                             <Input
-                                                type={showPassword ? "text" : "password"}
-                                                placeholder="Contraseña"
-                                                value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
-                                                className="bg-white/10 border-white/10 text-white placeholder:text-white/50 rounded-xl py-4 md:py-5 pr-10"
+                                                type="text"
+                                                placeholder="Usuario"
+                                                value={username}
+                                                onChange={(e) => setUsername(e.target.value)}
+                                                className="bg-white/10 border-white/10 text-white placeholder:text-white/50 rounded-xl py-4 md:py-5"
                                             />
-                                            <button
-                                                type="button"
+                                            <div className="relative">
+                                                <Input
+                                                    type={showPassword ? "text" : "password"}
+                                                    placeholder="Contraseña"
+                                                    value={password}
+                                                    onChange={(e) => setPassword(e.target.value)}
+                                                    className="bg-white/10 border-white/10 text-white placeholder:text-white/50 rounded-xl py-4 md:py-5 pr-10"
+                                                />
+                                                <button
+                                                    type="button"
                                                 onClick={() => setShowPassword(prev => !prev)}
-                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white"
-                                            >
-                                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                                            </button>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id="rememberMe"
-                                                checked={rememberMe}
-                                                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                                            />
+                                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white"
+                                                >
+                                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                                </button>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id="rememberMe"
+                                                    checked={rememberMe}
+                                                    onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                                                />
                                             <label htmlFor="rememberMe" className="text-sm font-medium text-white">
-                                                Recordar credenciales
-                                            </label>
-                                        </div>
-                                        <Button
-                                            type="submit"
-                                            className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-4 md:py-5 text-sm md:text-base rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
-                                        >
-                                            Iniciar sesión
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            onClick={() => setShowLogin(false)}
-                                            className="w-full text-white hover:bg-white/10 py-4 md:py-5 text-sm md:text-base rounded-xl transition-all duration-300"
-                                        >
-                                            Volver al inicio
-                                        </Button>
+                                                    Recordar credenciales
+                                                </label>
+                                            </div>
+                                                <Button
+                                                    type="submit"
+                                            className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white py-4 md:py-5 text-sm md:text-base rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+                                                >
+                                                    Iniciar sesión
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    onClick={() => setShowLogin(false)}
+                                                    className="w-full text-white hover:bg-white/10 py-4 md:py-5 text-sm md:text-base rounded-xl transition-all duration-300"
+                                                >
+                                                    Volver al inicio
+                                                </Button>
                                     </form>
-                                )}
+                                    )}
                             </div>
                         </div>
+                            </div>
                     </div>
-                </div>
             </div>
 
             <div className={`absolute bottom-4 md:bottom-8 left-1/2 transform -translate-x-1/2 text-white/50 transition-all duration-700 delay-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>

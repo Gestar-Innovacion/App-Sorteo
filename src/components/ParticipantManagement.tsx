@@ -122,7 +122,7 @@ export default function ParticipantManagement() {
                     <Input id="name" name="name" value={newParticipant.name} onChange={handleInputChange} className="border-2 border-purple-300 focus:border-purple-500" />
                 </div>
                 <div className="flex items-end">
-                    <Button onClick={handleAddParticipant} className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-2 px-4 rounded-full transition-all duration-200 transform hover:scale-105">
+                    <Button onClick={handleAddParticipant} className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-bold py-2 px-4 rounded-full transition-all duration-200 transform hover:scale-105">
                         Agregar Participante
                     </Button>
                 </div>

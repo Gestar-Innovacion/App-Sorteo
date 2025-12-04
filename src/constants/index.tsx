@@ -1,7 +1,7 @@
 // 'https://hundred.com.co'
 
 //const URL_BASE = 'https://hundred.com.co';
-// URL_BASE = 'http://localhost:8000';   
+//export const URL_BASE = 'http://localhost:8000';   
 //export const URL_BASE = 'https://api-test.hundred.com.co';
 export const URL_BASE = 'https://api-sorteo.hundred.com.co';
 

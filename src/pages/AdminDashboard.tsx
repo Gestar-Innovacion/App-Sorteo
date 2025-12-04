@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
-import { Home, LogOut, Gift, Users, Trophy, Plus, Upload, List, Trash2, RefreshCw, X, Menu, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { Home, LogOut, Gift, Users, Trophy, Plus, Upload, List, Trash2, RefreshCw, X, Menu, ChevronsLeft, ChevronsRight, Maximize, Minimize, BarChart3, History, Volume2, VolumeX } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { AddPrizeModal } from '@/components/AddPrizeModal'
 import { EditPrizeModal } from '@/components/EditPrizeModal'
@@ -19,6 +19,8 @@ import MinimalistLoader from '@/components/MinimalistLoader'
 import { AddParticipantModal } from '@/components/AddParticipantModal'
 import { EditParticipantModal } from '@/components/EditParticipantModal'
 import { StatisticsDetailModal } from '@/components/StatisticsDetailModal'
+import { StatisticsChart } from '@/components/StatisticsChart'
+import { WinnerHistoryModal } from '@/components/WinnerHistoryModal'
 
 import { request } from '@/services/index'
 import { URL_PARTICIPANT, URL_PRIZE, URL_WINNER, URL_PRIZE_BULK, URL_WINNER_FULL, URL_WINNER_FILTER, URL_PARTICIPANTS_BULK, URL_CLEAN, URL_LOGOUT } from '@/constants/index'
@@ -100,6 +102,10 @@ const AdminDashboard = () => {
     const [isMobile, setIsMobile] = useState(false);
     const [showStatisticsModal, setShowStatisticsModal] = useState(false)
     const [statisticsModalTitle, setStatisticsModalTitle] = useState('')
+    const [isFullscreen, setIsFullscreen] = useState(false)
+    const [showWinnerHistoryModal, setShowWinnerHistoryModal] = useState(false)
+    const [isSoundMuted, setIsSoundMuted] = useState(false)
+    const [showStatsPanel, setShowStatsPanel] = useState(false)
     const [statisticsModalItems, setStatisticsModalItems] = useState<(Prize | Participant)[]>([])
     const [statisticsModalType, setStatisticsModalType] = useState<'prizes' | 'participants'>('prizes')
     const hasLoadedRef = useRef(false)
@@ -170,6 +176,32 @@ const AdminDashboard = () => {
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
+
+    // Funciones para pantalla completa
+    const toggleFullscreen = useCallback(() => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().then(() => {
+                setIsFullscreen(true)
+            }).catch(err => {
+                console.error('Error al entrar en pantalla completa:', err)
+            })
+        } else {
+            document.exitFullscreen().then(() => {
+                setIsFullscreen(false)
+            }).catch(err => {
+                console.error('Error al salir de pantalla completa:', err)
+            })
+        }
+    }, [])
+
+    // Escuchar cambios de pantalla completa
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement)
+        }
+        document.addEventListener('fullscreenchange', handleFullscreenChange)
+        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    }, [])
 
     if (loading) {
         return (
@@ -582,12 +614,12 @@ const AdminDashboard = () => {
                     title: "Sin participantes disponibles",
                     description: `Quedan ${remainingPrizes.length} premio(s) sin sortear, pero no hay participantes elegibles para ellos.`,
                 })
-            } else {
-                toast({
-                    variant: "default",
-                    title: "Sorteo finalizado",
-                    description: "Todos los premios han sido sorteados.",
-                })
+        } else {
+            toast({
+                variant: "default",
+                title: "Sorteo finalizado",
+                description: "Todos los premios han sido sorteados.",
+            })
             }
         }
     }
@@ -815,41 +847,90 @@ const AdminDashboard = () => {
 
             <div className="relative z-10">
                 <header className="bg-white/10 backdrop-blur-lg border-b border-white/20">
-                    <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-                        <div className="flex items-center space-x-4">
-                            <img src="/forza-logo.png" alt="Forza Logo" className="h-6 sm:h-8" />
-                            <img src="/gestar-logo.png" alt="Gestar Logo" className="h-6 sm:h-8" />
+                    <div className="w-full px-4 py-2 flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                            <div className="bg-white/90 rounded-2xl px-3 py-1.5">
+                                <img src="/forza-logo.png" alt="Forza Logo" className="h-6 sm:h-8" />
+                            </div>
+                            <div className="bg-white/90 rounded-2xl px-3 py-1.5">
+                                <img src="/gestar-logo.png" alt="Gestar Logo" className="h-6 sm:h-8" />
+                            </div>
                         </div>
-                        <div className="flex items-center space-x-2 sm:space-x-4">
+                        <div className="flex items-center gap-0.5">
                             {/* Botón para ocultar/mostrar paneles laterales */}
                             <Button
                                 variant="ghost"
+                                size="sm"
                                 onClick={() => setAreSidebarsVisible(!areSidebarsVisible)}
-                                className="text-white hover:bg-white/10 rounded-full"
+                                className="text-white hover:bg-white/10 rounded-full p-2"
                                 title={areSidebarsVisible ? "Ocultar paneles laterales" : "Mostrar paneles laterales"}
                             >
-                                {areSidebarsVisible ? <ChevronsLeft className="h-5 w-5" /> : <ChevronsRight className="h-5 w-5" />}
+                                {areSidebarsVisible ? <ChevronsLeft className="h-4 w-4" /> : <ChevronsRight className="h-4 w-4" />}
                             </Button>
                             {isMobile && (
                                 <Button
                                     variant="ghost"
+                                    size="sm"
                                     onClick={toggleLeftPanel}
-                                    className="text-white hover:bg-white/10 rounded-full"
+                                    className="text-white hover:bg-white/10 rounded-full p-2"
                                     title={isLeftPanelVisible ? "Ocultar panel" : "Mostrar panel"}
                                 >
-                                    {isLeftPanelVisible ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                                    {isLeftPanelVisible ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
                                 </Button>
                             )}
+                            {/* Botón para silenciar/activar sonidos */}
                             <Button
                                 variant="ghost"
-                                onClick={() => navigate('/')}
-                                className="text-white hover:bg-white/10 rounded-full"
+                                size="sm"
+                                onClick={() => setIsSoundMuted(!isSoundMuted)}
+                                className={`text-white hover:bg-white/10 rounded-full p-2 ${isSoundMuted ? 'text-red-400' : ''}`}
+                                title={isSoundMuted ? "Activar sonidos" : "Silenciar sonidos"}
                             >
-                                <Home className="h-5 w-5" />
-                                <span className="hidden sm:inline ml-2">Inicio</span>
+                                {isSoundMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                            </Button>
+                            {/* Botón para ver estadísticas */}
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowStatsPanel(!showStatsPanel)}
+                                className={`text-white hover:bg-white/10 rounded-full p-2 ${showStatsPanel ? 'bg-white/20' : ''}`}
+                                title="Estadísticas"
+                            >
+                                <BarChart3 className="h-4 w-4" />
+                            </Button>
+                            {/* Botón para ver historial de ganadores */}
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowWinnerHistoryModal(true)}
+                                className="text-white hover:bg-white/10 rounded-full p-2"
+                                title="Historial de ganadores"
+                            >
+                                <History className="h-4 w-4" />
+                            </Button>
+                            {/* Botón para pantalla completa */}
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={toggleFullscreen}
+                                className="text-white hover:bg-white/10 rounded-full p-2"
+                                title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+                            >
+                                {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                            </Button>
+                            <div className="hidden sm:block w-px h-6 bg-white/20 mx-1" />
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => navigate('/')}
+                                className="text-white hover:bg-white/10 rounded-full p-2"
+                            >
+                                <Home className="h-4 w-4" />
+                                <span className="hidden md:inline ml-1 text-sm">Inicio</span>
                             </Button>
                             <Button
                                 variant="ghost"
+                                size="sm"
                                 onClick={async () => {
                                     try {
                                         const responseLogout = await request(URL_LOGOUT, "DELETE");
@@ -860,22 +941,44 @@ const AdminDashboard = () => {
                                         console.error("Error al cerrar sesión:", error);
                                     }}
                                 }
-                                className="text-white hover:bg-white/10 rounded-full"
+                                className="text-white hover:bg-white/10 rounded-full p-2"
                             >
-                                <LogOut className="h-5 w-5" />
-                                <span className="hidden sm:inline ml-2">Salir</span>
+                                <LogOut className="h-4 w-4" />
+                                <span className="hidden md:inline ml-1 text-sm">Salir</span>
                             </Button>
                             <Button
                                 variant="ghost"
+                                size="sm"
                                 onClick={() => setShowResetWarningModal(true)}
-                                className="text-white hover:bg-white/10 rounded-full"
+                                className="text-white hover:bg-white/10 rounded-full p-2"
                                 title="Reiniciar todo"
                             >
-                                <RefreshCw className="h-5 w-5" />
+                                <RefreshCw className="h-4 w-4" />
                             </Button>
                         </div>
                     </div>
                 </header>
+
+                {/* Panel de estadísticas gráficas */}
+                <AnimatePresence>
+                    {showStatsPanel && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="overflow-hidden border-b border-white/20"
+                        >
+                            <div className="w-full px-4 py-4 bg-white/5 backdrop-blur-lg">
+                                <StatisticsChart 
+                                    prizes={prizes}
+                                    participants={participants}
+                                    winners={winners}
+                                />
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 <main className="w-full px-2 sm:px-4 py-4 sm:py-6">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -1138,6 +1241,7 @@ const AdminDashboard = () => {
                 winningNumber={winningTicketNumber}
                 rangeStart={currentPrizeRange?.start}
                 rangeEnd={currentPrizeRange?.end}
+                isMuted={isSoundMuted}
             />
 
             <WinnerModal
@@ -1151,6 +1255,7 @@ const AdminDashboard = () => {
                 }}
                 winner={currentWinner}
                 onNextPrize={handleNextPrize}
+                isMuted={isSoundMuted}
             />
             <ResetWarningModal
                 isOpen={showResetWarningModal}
@@ -1176,6 +1281,13 @@ const AdminDashboard = () => {
                 title={statisticsModalTitle}
                 items={statisticsModalItems}
                 type={statisticsModalType}
+                winners={winners}
+            />
+
+            {/* Modal de historial de ganadores con filtros */}
+            <WinnerHistoryModal
+                isOpen={showWinnerHistoryModal}
+                onOpenChange={setShowWinnerHistoryModal}
                 winners={winners}
             />
         </div>

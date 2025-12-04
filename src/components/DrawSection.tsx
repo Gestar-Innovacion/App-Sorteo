@@ -77,8 +77,8 @@ const PrizeCard = memo(forwardRef<HTMLDivElement, PrizeCardProps>(({
                     </div>
                 )}
                 <DecorativeStars />
-                <CardContent className="p-6 flex items-center justify-center">
-                    <h3 className="text-xl font-semibold text-white text-center">{prize.name}</h3>
+                <CardContent className="p-4 sm:p-6 flex items-center justify-center">
+                    <h3 className="text-lg sm:text-xl font-semibold text-white text-center">{prize.name}</h3>
                 </CardContent>
             </Card>
         </motion.div>
@@ -87,12 +87,12 @@ const PrizeCard = memo(forwardRef<HTMLDivElement, PrizeCardProps>(({
 PrizeCard.displayName = 'PrizeCard'
 
 // Función helper fuera del componente
-const extractTicketNumber = (ticketNumber?: string): number | null => {
-    if (!ticketNumber) return null
-    const numbers = ticketNumber.replace(/\D/g, '')
-    if (numbers === '') return null
-    return parseInt(numbers, 10)
-}
+    const extractTicketNumber = (ticketNumber?: string): number | null => {
+        if (!ticketNumber) return null
+        const numbers = ticketNumber.replace(/\D/g, '')
+        if (numbers === '') return null
+        return parseInt(numbers, 10)
+    }
 
 export const DrawSection = memo(function DrawSection({ prizes, participants, onSelectPrize }: DrawSectionProps) {
     const [, setSelectedPrize] = useState<Prize | null>(null)
@@ -104,10 +104,10 @@ export const DrawSection = memo(function DrawSection({ prizes, participants, onS
         
         prizes.forEach(prize => {
             const count = participants.filter(p => {
-                if (!p.active || !p.ticket_number) return false
-                const ticketNum = extractTicketNumber(p.ticket_number)
-                if (ticketNum === null) return false
-                return ticketNum >= prize.range_start && ticketNum <= prize.range_end
+            if (!p.active || !p.ticket_number) return false
+            const ticketNum = extractTicketNumber(p.ticket_number)
+            if (ticketNum === null) return false
+            return ticketNum >= prize.range_start && ticketNum <= prize.range_end
             }).length
             map.set(prize.id_prize ?? 0, count)
         })

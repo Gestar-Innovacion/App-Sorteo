@@ -24,7 +24,7 @@ export function ErrorModal({ open, onOpenChange, existingParticipant, field }: E
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
-                className="bg-gradient-to-br from-red-500 to-purple-600 border-none text-white rounded-3xl overflow-hidden"
+                className="bg-gradient-to-br from-red-500 to-rose-700 border-none text-white rounded-3xl overflow-hidden"
                 description="Información sobre el participante existente"
             >
                 <DialogHeader>

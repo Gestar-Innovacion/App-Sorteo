@@ -110,7 +110,7 @@ export default function PrizeManagement() {
                     <Input id="range_end" name="range_end" type="number" value={newPrize.range_end} onChange={handleInputChange} className="border-2 border-indigo-300 focus:border-indigo-500" />
                 </div>
                 <div className="flex items-end">
-                    <Button onClick={handleAddPrize} className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-bold py-2 px-4 rounded-full transition-all duration-200 transform hover:scale-105">
+                    <Button onClick={handleAddPrize} className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-bold py-2 px-4 rounded-full transition-all duration-200 transform hover:scale-105">
                         Agregar Premio
                     </Button>
                 </div>

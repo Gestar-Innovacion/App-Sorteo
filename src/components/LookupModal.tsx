@@ -148,7 +148,7 @@ export function LookupModal({ isOpen, onOpenChange }: LookupModalProps) {
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent
-                className="bg-gradient-to-br from-purple-900 to-blue-900 border-none text-white sm:max-w-[425px] rounded-3xl overflow-hidden"
+                className="bg-gradient-to-br from-slate-800 via-teal-900 to-cyan-900 border-none text-white sm:max-w-[425px] rounded-3xl overflow-hidden"
             >
                 <DialogHeader>
                     <DialogTitle className="text-3xl font-bold text-center mb-6">Buscar Participante</DialogTitle>
@@ -222,10 +222,10 @@ export function LookupModal({ isOpen, onOpenChange }: LookupModalProps) {
                                 </div>
                             </div>
                             {!isTicketNumberSubmitted && (
-                                <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-4">
+                                <div className="bg-gradient-to-r from-teal-500 to-cyan-500 p-4">
                                     <Button
                                         onClick={handleSubmitTicketNumber}
-                                        className="w-full bg-white text-blue-900 hover:bg-blue-100 transition-colors duration-200 py-2 rounded-xl font-semibold"
+                                        className="w-full bg-white text-teal-900 hover:bg-teal-50 transition-colors duration-200 py-2 rounded-xl font-semibold"
                                         disabled={ticketNumber === ''}
                                     >
                                         Registrar Número de Sorteo
