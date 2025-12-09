@@ -19,7 +19,3 @@ export const URL_WINNER_FULL = `${URL_BASE}/winners/full`;
 export const URL_WINNER_FILTER = `${URL_BASE}/winners/filter`;
 
 export const URL_CLEAN = `${URL_BASE}/sorteo/clean`;
-
-
-
-
