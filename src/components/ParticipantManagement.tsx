@@ -17,12 +17,13 @@ interface Participant {
     cedula: string;
     ticket_number: string;
     name: string;
+    mesa?: string;
     active: boolean;
 }
 
 export default function ParticipantManagement() {
     const [participants, setParticipants] = useState<Participant[]>([])
-    const [newParticipant, setNewParticipant] = useState({ cedula: '', ticket_number: '', name: '' })
+    const [newParticipant, setNewParticipant] = useState({ cedula: '', ticket_number: '', name: '', mesa: '' })
     const { toast } = useToast()
 
     useEffect(() => {
@@ -40,12 +41,13 @@ export default function ParticipantManagement() {
             cedula: newParticipant.cedula,
             ticket_number: newParticipant.ticket_number,
             name: newParticipant.name,
+            mesa: newParticipant.mesa || undefined,
             active: true
         }
         const updatedParticipants = [...participants, participant]
         setParticipants(updatedParticipants)
         localStorage.setItem('participants', JSON.stringify(updatedParticipants))
-        setNewParticipant({ cedula: '', ticket_number: '', name: '' })
+        setNewParticipant({ cedula: '', ticket_number: '', name: '', mesa: '' })
         toast({
             title: "Participante añadido",
             description: "El participante ha sido agregado exitosamente.",
@@ -108,7 +110,7 @@ export default function ParticipantManagement() {
     return (
         <div className="space-y-8 bg-white p-8 rounded-lg shadow-xl">
             <h2 className="text-3xl font-bold text-center mb-6 text-purple-800">Gestión de Participantes Afortunados</h2>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-5 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="cedula" className="text-lg">Cédula</Label>
                     <Input id="cedula" name="cedula" value={newParticipant.cedula} onChange={handleInputChange} className="border-2 border-purple-300 focus:border-purple-500" />
@@ -120,6 +122,10 @@ export default function ParticipantManagement() {
                 <div className="space-y-2">
                     <Label htmlFor="name" className="text-lg">Nombre Completo</Label>
                     <Input id="name" name="name" value={newParticipant.name} onChange={handleInputChange} className="border-2 border-purple-300 focus:border-purple-500" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="mesa" className="text-lg">Mesa</Label>
+                    <Input id="mesa" name="mesa" value={newParticipant.mesa} onChange={handleInputChange} className="border-2 border-purple-300 focus:border-purple-500" placeholder="Opcional" />
                 </div>
                 <div className="flex items-end">
                     <Button onClick={handleAddParticipant} className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white font-bold py-2 px-4 rounded-full transition-all duration-200 transform hover:scale-105">
@@ -147,6 +153,7 @@ export default function ParticipantManagement() {
                         <TableHead>Cédula</TableHead>
                         <TableHead>Número de Ticket</TableHead>
                         <TableHead>Nombre</TableHead>
+                        <TableHead>Mesa</TableHead>
                         <TableHead>Activo</TableHead>
                         <TableHead>Acciones</TableHead>
                     </TableRow>
@@ -158,6 +165,7 @@ export default function ParticipantManagement() {
                             <TableCell>{participant.cedula}</TableCell>
                             <TableCell>{participant.ticket_number}</TableCell>
                             <TableCell>{participant.name}</TableCell>
+                            <TableCell>{participant.mesa || '-'}</TableCell>
                             <TableCell>{participant.active ? 'Sí' : 'No'}</TableCell>
                             <TableCell>
                                 <Button variant="destructive" onClick={() => handleDeleteParticipant(participant.id_participant)} className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 rounded-full transition-all duration-200 transform hover:scale-105">

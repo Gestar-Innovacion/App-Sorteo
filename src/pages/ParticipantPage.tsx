@@ -17,6 +17,7 @@ interface FormData {
     cedula: string;
     name: string;
     ticket_number: string;
+    mesa?: string;
     active: boolean;
 }
 
@@ -26,6 +27,7 @@ const ParticipantPage = () => {
         cedula: '',
         name: '',
         ticket_number: '',
+        mesa: '',
         active: true,
     })
     const [showSuccessModal, setShowSuccessModal] = useState(false)
@@ -46,6 +48,8 @@ const ParticipantPage = () => {
         } else if (name === 'name') {
             const textValue = value.replace(/[^a-zA-Z\s]/g, '');
             setFormData({ ...formData, [name]: textValue });
+        } else if (name === 'mesa') {
+            setFormData({ ...formData, [name]: value });
         }
     }
 
@@ -57,6 +61,7 @@ const ParticipantPage = () => {
             cedula: participant.cedula,
             name: participant.name,
             ticket_number: participant.ticket_number || '',
+            mesa: participant.mesa || '',
             active: participant.active
         } : undefined
     }
@@ -102,7 +107,7 @@ const ParticipantPage = () => {
         if (step === 3 && !formData.ticket_number) {
             toast({
                 title: "Campo requerido",
-                description: "Por favor ingrese su número de sorteo",
+                description: "Por favor ingrese su número de manilla",
                 variant: "destructive",
             })
             return
@@ -172,6 +177,13 @@ const ParticipantPage = () => {
                             className="bg-white/10 border-white/20 text-white placeholder:text-white/50 rounded-xl py-6 text-lg"
                             required
                         />
+                        <Input
+                            name="mesa"
+                            value={formData.mesa || ''}
+                            onChange={handleChange}
+                            placeholder="Ingrese su mesa (opcional)"
+                            className="bg-white/10 border-white/20 text-white placeholder:text-white/50 rounded-xl py-6 text-lg mt-4"
+                        />
                     </motion.div>
                 )
             case 3:
@@ -184,13 +196,13 @@ const ParticipantPage = () => {
                         className="space-y-4"
                     >
                         <h2 className="text-3xl font-bold text-white text-center mb-8">
-                            Ingresa tu Número de Sorteo
+                            Ingresa tu Número de Manilla
                         </h2>
                         <Input
                             name="ticket_number"
                             value={formData.ticket_number}
                             onChange={handleChange}
-                            placeholder="Ingrese su número de sorteo"
+                            placeholder="Ingrese su número de manilla"
                             className="bg-white/10 border-white/20 text-white placeholder:text-white/50 rounded-xl py-6 text-lg"
                             type="text"
                             inputMode="numeric"

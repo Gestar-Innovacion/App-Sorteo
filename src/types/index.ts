@@ -11,6 +11,7 @@ export interface Participant {
   name: string;
   cedula: string;
   ticket_number?: string;
+  mesa?: string;
   active: boolean;
 }
 

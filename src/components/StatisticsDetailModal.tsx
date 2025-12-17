@@ -122,7 +122,16 @@ function ParticipantCard({ participant, modalTitle, winners = [] }: { participan
             </div>
             <p className="text-sm text-white/80">Cédula: {participant.cedula}</p>
             {participant.ticket_number && (
-                <p className="text-sm text-white/80">Número de sorteo: {participant.ticket_number}</p>
+                <div className="bg-cyan-500/10 border border-cyan-400/25 rounded-xl p-2 mt-2">
+                    <p className="text-xs text-white/70 font-medium">Número de Manilla</p>
+                    <p className="text-sm font-semibold text-cyan-200">{participant.ticket_number}</p>
+                </div>
+            )}
+            {participant.mesa && (
+                <div className="bg-teal-500/10 border border-teal-400/25 rounded-xl p-2 mt-2">
+                    <p className="text-xs text-white/70 font-medium">Mesa</p>
+                    <p className="text-sm font-semibold text-teal-200">{participant.mesa}</p>
+                </div>
             )}
             <div className="mt-2">
                 <span className={`px-2 py-1 rounded-full text-xs flex items-center ${statusInfo.color}`}>

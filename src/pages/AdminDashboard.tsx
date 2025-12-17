@@ -738,7 +738,7 @@ const AdminDashboard = () => {
         }
     }
 
-    const handleAddParticipant = async (newParticipant: { name: string; cedula: string; ticket_number?: string }) => {
+    const handleAddParticipant = async (newParticipant: { name: string; cedula: string; ticket_number?: string; mesa?: string }) => {
         const participant = {
             ...newParticipant,
             active: true
@@ -783,6 +783,7 @@ const AdminDashboard = () => {
                 name: updatedParticipant.name,
                 cedula: updatedParticipant.cedula,
                 ticket_number: updatedParticipant.ticket_number || '',
+                mesa: updatedParticipant.mesa || '',
                 active: updatedParticipant.active
             });
 

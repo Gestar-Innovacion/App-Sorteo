@@ -20,6 +20,7 @@ export function EditParticipantModal({ isOpen, onOpenChange, participant, onUpda
     const [name, setName] = useState('')
     const [cedula, setCedula] = useState('')
     const [ticketNumber, setTicketNumber] = useState('')
+    const [mesa, setMesa] = useState('')
     const [active, setActive] = useState(true)
     const [errors, setErrors] = useState<{ name?: string; cedula?: string; ticketNumber?: string; submit?: string }>({})
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -29,6 +30,7 @@ export function EditParticipantModal({ isOpen, onOpenChange, participant, onUpda
             setName(participant.name || '')
             setCedula(participant.cedula || '')
             setTicketNumber(participant.ticket_number || '')
+            setMesa(participant.mesa || '')
             setActive(participant.active ?? true)
             setErrors({})
         }
@@ -55,9 +57,9 @@ export function EditParticipantModal({ isOpen, onOpenChange, participant, onUpda
                 break
             case 'ticketNumber':
                 if (value.trim() !== '' && value.length !== 3) {
-                    error = 'El número de sorteo debe tener 3 dígitos o estar vacío'
+                    error = 'El número de manilla debe tener 3 dígitos o estar vacío'
                 } else if (value.trim() !== '' && participant && existingParticipants.some(p => p.id_participant !== participant.id_participant && p.ticket_number === value)) {
-                    error = 'Ya existe un participante con este número de sorteo'
+                    error = 'Ya existe un participante con este número de manilla'
                 }
                 break
         }
@@ -81,6 +83,7 @@ export function EditParticipantModal({ isOpen, onOpenChange, participant, onUpda
                 name: name.trim(),
                 cedula: cedula.trim(),
                 ticket_number: ticketNumber.trim() || undefined,
+                mesa: mesa.trim() || undefined,
                 active: active
             }
 
@@ -105,13 +108,13 @@ export function EditParticipantModal({ isOpen, onOpenChange, participant, onUpda
         <AnimatePresence>
             {isOpen && (
                 <Dialog open={isOpen} onOpenChange={onOpenChange}>
-                    <DialogContent className="sm:max-w-[425px] w-[95vw] max-w-[95vw] sm:w-full bg-gradient-to-br from-teal-700 to-blue-900 text-white rounded-3xl border-2 border-white/20 shadow-xl">
+                    <DialogContent className="sm:max-w-[425px] w-[95vw] max-w-[95vw] sm:w-full bg-gradient-to-br from-teal-700 to-blue-900 text-white rounded-3xl border-2 border-white/20 shadow-xl p-4 sm:p-6">
                         <DialogHeader>
-                            <DialogTitle className="text-3xl font-bold text-center flex items-center justify-center text-white">
-                                <User className="mr-2 h-8 w-8" />
+                            <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold text-center flex items-center justify-center text-white flex-wrap gap-2">
+                                <User className="mr-2 h-6 w-6 sm:h-8 sm:w-8" />
                                 Editar Participante
                             </DialogTitle>
-                            <DialogDescription className="text-white/70">
+                            <DialogDescription className="text-white/70 text-sm sm:text-base">
                                 Modifique los datos del participante. Haga clic en guardar cuando termine.
                             </DialogDescription>
                         </DialogHeader>
@@ -121,10 +124,10 @@ export function EditParticipantModal({ isOpen, onOpenChange, participant, onUpda
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -20 }}
                                 transition={{ duration: 0.3 }}
-                                className="grid gap-4 py-4"
+                                className="grid gap-3 sm:gap-4 py-2 sm:py-4"
                             >
-                                <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
-                                    <Label htmlFor="name" className="sm:text-right">
+                                <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                                    <Label htmlFor="name" className="sm:text-right text-sm sm:text-base">
                                         Nombre
                                     </Label>
                                     <Input
@@ -136,14 +139,14 @@ export function EditParticipantModal({ isOpen, onOpenChange, participant, onUpda
                                             validateField('name', value)
                                         }}
                                         onBlur={() => validateField('name', name)}
-                                        className="col-span-1 sm:col-span-3 bg-white/10 border-white/20 text-white placeholder-white/50 rounded-xl"
+                                        className="col-span-1 sm:col-span-3 bg-white/10 border-white/20 text-white placeholder-white/50 rounded-xl text-sm sm:text-base py-2 sm:py-3"
                                         required
                                     />
                                 </div>
-                                {errors.name && <p className="text-red-500 text-sm col-span-full">{errors.name}</p>}
+                                {errors.name && <p className="text-red-500 text-xs sm:text-sm col-span-full">{errors.name}</p>}
                                 
-                                <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
-                                    <Label htmlFor="cedula" className="sm:text-right">
+                                <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                                    <Label htmlFor="cedula" className="sm:text-right text-sm sm:text-base">
                                         Cédula
                                     </Label>
                                     <Input
@@ -155,16 +158,16 @@ export function EditParticipantModal({ isOpen, onOpenChange, participant, onUpda
                                             validateField('cedula', value)
                                         }}
                                         onBlur={() => validateField('cedula', cedula)}
-                                        className="col-span-1 sm:col-span-3 bg-white/10 border-white/20 text-white placeholder-white/50 rounded-xl"
+                                        className="col-span-1 sm:col-span-3 bg-white/10 border-white/20 text-white placeholder-white/50 rounded-xl text-sm sm:text-base py-2 sm:py-3"
                                         required
                                         maxLength={10}
                                     />
                                 </div>
-                                {errors.cedula && <p className="text-red-500 text-sm col-span-full">{errors.cedula}</p>}
+                                {errors.cedula && <p className="text-red-500 text-xs sm:text-sm col-span-full">{errors.cedula}</p>}
                                 
-                                <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
-                                    <Label htmlFor="ticketNumber" className="sm:text-right">
-                                        Número de Sorteo
+                                <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                                    <Label htmlFor="ticketNumber" className="sm:text-right text-sm sm:text-base">
+                                        Número de Manilla
                                     </Label>
                                     <Input
                                         id="ticketNumber"
@@ -175,12 +178,27 @@ export function EditParticipantModal({ isOpen, onOpenChange, participant, onUpda
                                             validateField('ticketNumber', value)
                                         }}
                                         onBlur={() => validateField('ticketNumber', ticketNumber)}
-                                        className="col-span-1 sm:col-span-3 bg-white/10 border-white/20 text-white placeholder-white/50 rounded-xl"
+                                        className="col-span-1 sm:col-span-3 bg-white/10 border-white/20 text-white placeholder-white/50 rounded-xl text-sm sm:text-base py-2 sm:py-3"
                                         placeholder="Opcional (3 dígitos)"
                                         maxLength={3}
                                     />
                                 </div>
-                                {errors.ticketNumber && <p className="text-red-500 text-sm col-span-full">{errors.ticketNumber}</p>}
+                                {errors.ticketNumber && <p className="text-red-500 text-xs sm:text-sm col-span-full">{errors.ticketNumber}</p>}
+                                
+                                <div className="grid grid-cols-1 sm:grid-cols-4 items-start sm:items-center gap-2 sm:gap-4">
+                                    <Label htmlFor="mesa" className="sm:text-right text-sm sm:text-base">
+                                        Mesa
+                                    </Label>
+                                    <Input
+                                        id="mesa"
+                                        value={mesa}
+                                        onChange={(e) => {
+                                            setMesa(e.target.value)
+                                        }}
+                                        className="col-span-1 sm:col-span-3 bg-white/10 border-white/20 text-white placeholder-white/50 rounded-xl text-sm sm:text-base py-2 sm:py-3"
+                                        placeholder="Opcional"
+                                    />
+                                </div>
                                 
                                 <div className="flex items-center space-x-2">
                                     <Checkbox
@@ -191,24 +209,24 @@ export function EditParticipantModal({ isOpen, onOpenChange, participant, onUpda
                                     />
                                     <Label
                                         htmlFor="active"
-                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                        className="text-xs sm:text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                     >
                                         Participante activo
                                     </Label>
                                 </div>
                             </motion.div>
                             {errors.submit && (
-                                <div className="text-red-500 text-sm mb-4">
+                                <div className="text-red-500 text-xs sm:text-sm mb-3 sm:mb-4">
                                     {errors.submit}
                                 </div>
                             )}
-                            <DialogFooter>
+                            <DialogFooter className="mt-2 sm:mt-4">
                                 <Button
                                     type="submit"
-                                    className="w-full bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white transition-colors duration-200 rounded-xl"
+                                    className="w-full bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white transition-colors duration-200 rounded-xl py-2 sm:py-3 text-sm sm:text-base"
                                     disabled={isSubmitting || Object.values(errors).some(error => error !== undefined && error !== '')}
                                 >
-                                    <Save className="mr-2 h-5 w-5" />
+                                    <Save className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                                     {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
                                 </Button>
                             </DialogFooter>
