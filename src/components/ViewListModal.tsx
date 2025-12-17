@@ -17,9 +17,10 @@ interface ViewListModalProps {
     onDelete: (id: number) => void
     onEditParticipant?: (participant: Participant) => void
     onEditPrize?: (prize: Prize) => void
+    winners?: Array<{ id_participant: number }>
 }
 
-export function ViewListModal({ isOpen, onOpenChange, items = [], type, onDelete, onEditParticipant, onEditPrize }: ViewListModalProps) {
+export function ViewListModal({ isOpen, onOpenChange, items = [], type, onDelete, onEditParticipant, onEditPrize, winners = [] }: ViewListModalProps) {
     const [searchQuery, setSearchQuery] = useState('')
     const [filteredItems, setFilteredItems] = useState<PrizeOrParticipant[]>(items)
 
@@ -106,6 +107,7 @@ export function ViewListModal({ isOpen, onOpenChange, items = [], type, onDelete
                                                         participant={item as Participant}
                                                         onDelete={onDelete}
                                                         onEdit={onEditParticipant}
+                                                        winners={winners}
                                                     />
                                                 )}
                                             </CardContent>
@@ -194,32 +196,43 @@ function PrizeItem({ prize, onDelete, onEdit }: { prize: Prize; onDelete: (id: n
     )
 }
 
-function ParticipantItem({ participant, onDelete, onEdit }: { participant: Participant; onDelete: (id: number) => void; onEdit?: (participant: Participant) => void }) {
+function ParticipantItem({ participant, onDelete, onEdit, winners = [] }: { participant: Participant; onDelete: (id: number) => void; onEdit?: (participant: Participant) => void; winners?: Array<{ id_participant: number }> }) {
     const getStatusInfo = () => {
-        if (participant.ticket_number && participant.active) {
-            return {
-                label: 'Asistente',
-                color: 'bg-green-500 text-white',
-                icon: CheckCircle
-            }
-        } else if (participant.ticket_number && !participant.active) {
-            return {
-                label: 'Ganador',
-                color: 'bg-yellow-500 text-yellow-900',
-                icon: Trophy
-            }
-        } else if (!participant.ticket_number && !participant.active) {
+        // Verificar si el participante es realmente un ganador (está en la API de winners)
+        const isActualWinner = winners.some(w => w.id_participant === participant.id_participant)
+        
+        // Si NO tiene número de manilla → "No Asistente"
+        if (!participant.ticket_number) {
             return {
                 label: 'No Asistente',
                 color: 'bg-red-500 text-white',
                 icon: XCircle
             }
-        } else {
+        }
+        
+        // Si tiene número de manilla Y ganó → "Ganador"
+        if (participant.ticket_number && isActualWinner) {
             return {
-                label: 'Registrado',
-                color: 'bg-blue-500 text-white',
-                icon: User
+                label: 'Ganador',
+                color: 'bg-yellow-500 text-yellow-900',
+                icon: Trophy
             }
+        }
+        
+        // Si tiene número de manilla → "Asistente"
+        if (participant.ticket_number) {
+            return {
+                label: 'Asistente',
+                color: 'bg-green-500 text-white',
+                icon: CheckCircle
+            }
+        }
+        
+        // Por defecto
+        return {
+            label: 'No Asistente',
+            color: 'bg-red-500 text-white',
+            icon: XCircle
         }
     }
 

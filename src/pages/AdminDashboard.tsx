@@ -261,14 +261,57 @@ const AdminDashboard = () => {
             const rows = text.split('\n').filter(row => row.trim() !== '');
 
             // Filtrar participantes con campos vacíos (name, cedula o ticket_number)
-            const newParticipants: Omit<Participant, 'id_participant'>[] = rows.map((row) => {
-                const [name, cedula] = row.split(';').map(field => field.trim());
+            // Ignorar la primera línea si es un header
+            const dataRows = rows.filter((row, index) => {
+                // Si la primera línea contiene "name" o "cedula", es un header y se ignora
+                if (index === 0 && (row.toLowerCase().includes('name') || row.toLowerCase().includes('cedula'))) {
+                    return false;
+                }
+                return true;
+            });
 
-                // Validar si alguno de los campos está vacío
+            const newParticipants: Omit<Participant, 'id_participant'>[] = dataRows.map((row) => {
+                const fields = row.split(';').map(field => field.trim());
+                
+                // Los campos mínimos requeridos son name (posición 0) y cedula (posición 1)
+                const name = fields[0] || '';
+                const cedula = fields[1] || '';
+                
+                // Los demás campos son opcionales y se asignan según su posición
+                // Formato esperado: name;cedula;ticket_number;mesa
+                // ticket_number puede estar vacío, pero si hay 4 campos, el 4to es mesa
+                let ticket_number: string | undefined = undefined;
+                let mesa: string | undefined = undefined;
+                
+                // Si hay un campo en posición 2, verificar si es ticket_number (3 dígitos) o mesa
+                if (fields[2] && fields[2].length > 0) {
+                    if (/^\d{3}$/.test(fields[2])) {
+                        ticket_number = fields[2];
+                        // Si hay un campo en posición 3, es mesa
+                        if (fields[3] && fields[3].length > 0) {
+                            mesa = fields[3];
+                        }
+                    } else {
+                        // Si no es ticket_number, entonces es mesa
+                        mesa = fields[2];
+                        // Si hay un campo en posición 3, podría ser ticket_number
+                        if (fields[3] && /^\d{3}$/.test(fields[3])) {
+                            ticket_number = fields[3];
+                        }
+                    }
+                } else if (fields[3] && fields[3].length > 0) {
+                    // Si posición 2 está vacía pero posición 3 tiene contenido, es mesa
+                    // (formato: name;cedula;;mesa)
+                    mesa = fields[3];
+                }
+
+                // Validar si los campos requeridos están presentes
                 if (name && cedula) {
                     return {
                         name,
                         cedula,
+                        ticket_number: ticket_number || undefined,
+                        mesa: mesa || undefined,
                         active: false
                     };
                 }
@@ -412,7 +455,7 @@ const AdminDashboard = () => {
 
         // Filtrar participantes elegibles con validación mejorada
         const availableParticipants = participants.filter(p => {
-            if (!p.active || !p.ticket_number) return false
+            if (!p.ticket_number) return false
             const ticketNum = extractTicketNumber(p.ticket_number)
             if (ticketNum === null) return false
             return ticketNum >= prize.range_start && ticketNum <= prize.range_end
@@ -432,7 +475,7 @@ const AdminDashboard = () => {
         
         // Validar nuevamente que hay participantes disponibles (por si cambió algo)
         const currentAvailableParticipants = participants.filter(p => {
-            if (!p.active || !p.ticket_number) return false
+            if (!p.ticket_number) return false
             const ticketNum = extractTicketNumber(p.ticket_number)
             if (ticketNum === null) return false
             return ticketNum >= prize.range_start && ticketNum <= prize.range_end
@@ -477,7 +520,7 @@ const AdminDashboard = () => {
         // Mostrar el modal con el número ganador
         setShowDrawingModal(true)
 
-        // Esperar tiempo suficiente: animación (~3s) + tiempo que el número ganador se queda quieto (1.5s) = 4.5s
+        // Esperar tiempo suficiente: animación (~2s) + tiempo mínimo que el número ganador se queda quieto (0.1s) = 2.1s
         setTimeout(() => {
             console.log('Timeout del sorteo completado - iniciando proceso de mostrar ganador')
             
@@ -582,7 +625,7 @@ const AdminDashboard = () => {
             
             // Siempre liberar el flag de sorteo en progreso
             isDrawingRef.current = false
-        }, 4500) // ~3s animación + 1.5s que el número ganador se queda quieto
+        }, 2100) // ~2s animación + 0.1s que el número ganador se queda quieto
     }
 
     const handleNextPrize = () => {
@@ -594,7 +637,7 @@ const AdminDashboard = () => {
             
             // Verificar si hay participantes elegibles para este premio
             const eligibleParticipants = participants.filter(participant => {
-                if (!participant.active || !participant.ticket_number) return false
+                if (!participant.ticket_number) return false
                 const ticketNum = extractTicketNumber(participant.ticket_number)
                 if (ticketNum === null) return false
                 return ticketNum >= p.range_start && ticketNum <= p.range_end
@@ -828,17 +871,22 @@ const AdminDashboard = () => {
         setShowStatisticsModal(true)
     }
 
-    // Obtener participantes que realmente son ganadores (están en la API de winners)
+    // Obtener participantes que realmente son ganadores (tienen ticket_number Y están en la API de winners)
     const getActualWinners = () => {
         if (winners.length === 0) return []
         const winnerParticipantIds = winners.map(w => w.id_participant)
-        return participants.filter(p => winnerParticipantIds.includes(p.id_participant))
+        return participants.filter(p => p.ticket_number && winnerParticipantIds.includes(p.id_participant))
     }
 
-    // Obtener participantes que son "No Asistentes" (active: false pero NO son ganadores)
-    const getNonAttendees = () => {
+    // Obtener participantes que son "Asistentes" (tienen ticket_number Y NO son ganadores)
+    const getAttendees = () => {
         const winnerParticipantIds = winners.map(w => w.id_participant)
-        return participants.filter(p => !p.active && !winnerParticipantIds.includes(p.id_participant))
+        return participants.filter(p => p.ticket_number && !winnerParticipantIds.includes(p.id_participant))
+    }
+
+    // Obtener participantes que son "No Asistentes" (NO tienen ticket_number)
+    const getNonAttendees = () => {
+        return participants.filter(p => !p.ticket_number)
     }
 
     return (
@@ -1087,9 +1135,9 @@ const AdminDashboard = () => {
                                                         </div>
                                                         <p className="text-xs text-white/80">Total</p>
                                                     </div>
-                                                    <div className="text-center cursor-pointer" onClick={() => openStatisticsModal('Participantes Asistentes', participants.filter(p => p.ticket_number && p.active), 'participants')}>
+                                                    <div className="text-center cursor-pointer" onClick={() => openStatisticsModal('Participantes Asistentes', getAttendees(), 'participants')}>
                                                         <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm mb-2">
-                                                            <p className="text-xl font-bold text-white">{participants.filter(p => p.ticket_number && p.active).length}</p>
+                                                            <p className="text-xl font-bold text-white">{getAttendees().length}</p>
                                                         </div>
                                                         <p className="text-xs text-white/80">
                                                             Asistentes</p>
@@ -1227,6 +1275,7 @@ const AdminDashboard = () => {
                 type="participants"
                 onDelete={handleDeleteParticipant}
                 onEditParticipant={handleEditParticipant}
+                winners={winners}
             />
 
             <DrawingModal

@@ -37,7 +37,7 @@ export const StatisticsChart = memo(function StatisticsChart({
             const eligibleParticipants = participants.filter(p => {
                 if (!p.ticket_number) return false
                 const ticket = parseInt(p.ticket_number.replace(/\D/g, ''), 10)
-                return !isNaN(ticket) && ticket >= rangeStart && ticket <= rangeEnd && p.active
+                return !isNaN(ticket) && ticket >= rangeStart && ticket <= rangeEnd
             }).length
 
             return {

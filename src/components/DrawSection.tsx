@@ -104,7 +104,7 @@ export const DrawSection = memo(function DrawSection({ prizes, participants, onS
         
         prizes.forEach(prize => {
             const count = participants.filter(p => {
-            if (!p.active || !p.ticket_number) return false
+            if (!p.ticket_number) return false
             const ticketNum = extractTicketNumber(p.ticket_number)
             if (ticketNum === null) return false
             return ticketNum >= prize.range_start && ticketNum <= prize.range_end

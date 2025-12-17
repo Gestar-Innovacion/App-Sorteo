@@ -93,22 +93,24 @@ function ParticipantCard({ participant, modalTitle, winners = [] }: { participan
             return { label: 'Ganador', color: 'bg-yellow-500 text-yellow-900', icon: Trophy }
         }
         
-        // Lógica normal para otros casos (Total de Participantes, etc.)
-        if (participant.ticket_number && participant.active) {
-            return { label: 'Asistente', color: 'bg-green-500 text-white', icon: CheckCircle }
-        } else if (participant.ticket_number && !participant.active) {
-            // Si tiene ticket pero está inactivo, verificar si es ganador real
-            if (isActualWinner) {
-                return { label: 'Ganador', color: 'bg-yellow-500 text-yellow-900', icon: Trophy }
-            } else {
-                // Si no es ganador real, es "No Asistente"
-                return { label: 'No Asistente', color: 'bg-red-500 text-white', icon: XCircle }
-            }
-        } else if (!participant.ticket_number && !participant.active) {
+        // Lógica simple para todos los casos:
+        // Si NO tiene número de manilla → "No Asistente"
+        if (!participant.ticket_number) {
             return { label: 'No Asistente', color: 'bg-red-500 text-white', icon: XCircle }
-        } else {
-            return { label: 'Registrado', color: 'bg-blue-500 text-white', icon: User }
         }
+        
+        // Si tiene número de manilla Y ganó → "Ganador"
+        if (participant.ticket_number && isActualWinner) {
+            return { label: 'Ganador', color: 'bg-yellow-500 text-yellow-900', icon: Trophy }
+        }
+        
+        // Si tiene número de manilla → "Asistente"
+        if (participant.ticket_number) {
+            return { label: 'Asistente', color: 'bg-green-500 text-white', icon: CheckCircle }
+        }
+        
+        // Por defecto
+        return { label: 'No Asistente', color: 'bg-red-500 text-white', icon: XCircle }
     }
 
     const statusInfo = getStatusInfo()

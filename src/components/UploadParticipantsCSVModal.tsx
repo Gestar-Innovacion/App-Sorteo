@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
-import { Upload, AlertCircle, FileText, X, Download } from 'lucide-react'
+import { Upload, FileText, X, Download } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface UploadParticipantsCSVModalProps {
@@ -50,11 +50,11 @@ export function UploadParticipantsCSVModal({ isOpen, onOpenChange, onUploadSucce
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px] w-[95vw] max-w-[95vw] sm:w-full bg-gradient-to-br from-teal-700 to-blue-900 text-white rounded-3xl border-2 border-white/20 shadow-xl">
                 <DialogHeader>
-                    <DialogTitle className="text-3xl font-bold text-center text-white">
+                    <DialogTitle className="text-2xl font-bold text-center text-white">
                         Cargar Participantes CSV
                     </DialogTitle>
                 </DialogHeader>
-                <div className="space-y-6">
+                <div className="space-y-4">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -69,11 +69,11 @@ export function UploadParticipantsCSVModal({ isOpen, onOpenChange, onUploadSucce
                         />
                         <label
                             htmlFor="csvFile"
-                            className="flex items-center justify-center w-full p-8 bg-white/10 border-2 border-dashed border-white/30 rounded-2xl cursor-pointer hover:bg-white/20 transition-all duration-300"
+                            className="flex items-center justify-center w-full p-6 bg-white/10 border-2 border-dashed border-white/30 rounded-2xl cursor-pointer hover:bg-white/20 transition-all duration-300"
                         >
                             <div className="flex flex-col items-center">
-                                <FileText className="w-20 h-20 mb-4 text-blue-300" />
-                                <span className="text-lg font-medium">
+                                <FileText className="w-12 h-12 mb-2 text-blue-300" />
+                                <span className="text-base font-medium">
                                     {file ? file.name : "Selecciona un archivo CSV"}
                                 </span>
                             </div>
@@ -99,7 +99,7 @@ export function UploadParticipantsCSVModal({ isOpen, onOpenChange, onUploadSucce
                     >
                         <Button
                             onClick={handleUpload}
-                            className="w-full bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled={!file || uploading}
                         >
                             {uploading ? (
@@ -123,25 +123,28 @@ export function UploadParticipantsCSVModal({ isOpen, onOpenChange, onUploadSucce
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="text-sm text-white/80 bg-white/10 p-6 rounded-2xl"
+                        className="bg-white/10 p-4 rounded-2xl space-y-2"
                     >
-                        <div className="flex items-start gap-4">
-                            <AlertCircle className="h-7 w-7 mt-1 flex-shrink-0 text-yellow-300" />
-                            <p>
-                                El archivo CSV debe estar delimitado por punto y coma (;) y contener las columnas en el siguiente orden: <span className="font-semibold">name</span>, <span className="font-semibold">cedula</span>, <span className="font-semibold">ticket_number</span>.
-                                Los campos 'active' y 'asistencia' se establecerán automáticamente.
+                        <code className="block bg-black/30 p-3 rounded-xl text-xs text-white/90 font-mono">
+                            Juan Pérez;1234567890<br />
+                            María García;0987654321;Mesa 2<br />
+                            Carlos López;1122334455;001;Mesa 1
+                        </code>
+                        <div className="flex items-center justify-between">
+                            <p className="text-xs text-white/70">
+                                Requeridos: <span className="font-semibold">name</span>, <span className="font-semibold">cedula</span>
                             </p>
+                            <motion.a
+                                href="/plantillas/plantilla_participantes.csv"
+                                download="plantilla_participantes.csv"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-medium transition-all duration-300"
+                            >
+                                <Download className="h-3 w-3" />
+                                Plantilla
+                            </motion.a>
                         </div>
-                        <motion.a
-                            href="/plantillas/plantilla_participantes.csv"
-                            download="plantilla_participantes.csv"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl text-sm font-medium transition-all duration-300"
-                        >
-                            <Download className="h-4 w-4" />
-                            Descargar Plantilla
-                        </motion.a>
                     </motion.div>
                 </div>
             </DialogContent>

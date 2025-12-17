@@ -129,7 +129,7 @@ export const DrawingModal = memo(function DrawingModal({
             let confettiCount = 0
             const maxConfettiShots = 3
             let iteration = 0
-            const maxIterations = 20
+            const maxIterations = 15
             
             const animateNumber = () => {
                 iteration++
