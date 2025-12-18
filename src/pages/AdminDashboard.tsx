@@ -782,9 +782,16 @@ const AdminDashboard = () => {
     }
 
     const handleAddParticipant = async (newParticipant: { name: string; cedula: string; ticket_number?: string; mesa?: string }) => {
-        const participant = {
-            ...newParticipant,
+        const participant: any = {
+            name: newParticipant.name,
+            cedula: newParticipant.cedula,
+            ticket_number: newParticipant.ticket_number || '',
             active: true
+        }
+        
+        // Solo incluir mesa si tiene un valor válido
+        if (newParticipant.mesa && newParticipant.mesa.trim()) {
+            participant.mesa = newParticipant.mesa.trim()
         }
 
         try {

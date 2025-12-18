@@ -87,8 +87,8 @@ export function AddParticipantModal({ isOpen, onOpenChange, onAddParticipant, ex
             const participant = {
                 name,
                 cedula,
-                ...(mesa ? { mesa: mesa.trim() } : {}),
-                ...(includeTicketNumber && ticketNumber ? { ticket_number: ticketNumber } : {})
+                ...(mesa && mesa.trim() ? { mesa: mesa.trim() } : {}),
+                ticket_number: (includeTicketNumber && ticketNumber && ticketNumber.trim().length === 3) ? ticketNumber.trim() : ''
             }
 
             try {
